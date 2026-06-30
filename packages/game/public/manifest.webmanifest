@@ -1,0 +1,14 @@
+{
+  "name": "Kombinat",
+  "short_name": "Kombinat",
+  "description": "Gra incremental w realiach poznego PRL.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f0a",
+  "theme_color": "#0b0f0a",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" }
+  ]
+}

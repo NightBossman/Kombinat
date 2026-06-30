@@ -1,0 +1,1823 @@
+/* app.css — Faza 0: brzydkie, ale dzialajace i czytelne. Estetyka terminala fosforowego.
+   Czytelnosc danych jest nienegocjowalna (PLAN 10.2). CRT/juice dochodzi w Fazie 3. */
+:root {
+  --bg: #0b0f0a;
+  --panel: #12180f;
+  --panel-2: #161d12;
+  --text: #cfe8c4;
+  --dim: #8aa07e;
+  --accent: #5fa86a;
+  --accent-strong: #8fe39a;
+  --border: #28331f;
+  --danger: #c2502f;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --glow: rgba(143, 227, 154, 0.45); /* poswiata juice (zakup) — themowana */
+  --mono: "Cascadia Mono", "Consolas", "DejaVu Sans Mono", ui-monospace, monospace;
+}
+
+/* === Style do wyboru (Ustawienia → Styl) ============================================
+   Domyslny to fosforowa zielen PRL (z :root). Kazdy inny styl tylko PODMIENIA zmienne —
+   reszta gry (uklad, CRT, juice) dziala tak samo. Wybor nalezy do gracza. */
+
+/* Bursztynowy terminal — cieplejszy retro-klimat. */
+body[data-theme='bursztyn'] {
+  --bg: #120d04;
+  --panel: #1a1305;
+  --panel-2: #211808;
+  --text: #f0d39a;
+  --dim: #b89758;
+  --accent: #d39a3a;
+  --accent-strong: #ffd277;
+  --border: #3a2c10;
+  --danger: #c2502f;
+  --shadow: rgba(0, 0, 0, 0.45);
+  --glow: rgba(255, 210, 119, 0.45);
+}
+
+/* Nowoczesny — czystszy, mniej „klimatyczny", bardziej produkcyjny (font bezszeryfowy). */
+body[data-theme='nowoczesny'] {
+  --bg: #0e1116;
+  --panel: #161b22;
+  --panel-2: #1d2530;
+  --text: #d8e3ef;
+  --dim: #8a98a8;
+  --accent: #2f9e8f;
+  --accent-strong: #5fd3bf;
+  --border: #2a3340;
+  --danger: #d2603a;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --glow: rgba(95, 211, 191, 0.45);
+  --mono: "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Jasny / papierowy — wysoka czytelnosc, dzienny. */
+body[data-theme='jasny'] {
+  --bg: #e9ead8;
+  --panel: #f4f5e8;
+  --panel-2: #fbfcf2;
+  --text: #23281c;
+  --dim: #5f6a52;
+  --accent: #4a7d3f;
+  --accent-strong: #2f5a26;
+  --border: #c9cdb4;
+  --danger: #b34727;
+  --shadow: rgba(0, 0, 0, 0.15);
+  --glow: rgba(74, 125, 63, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  /* Cyfry o stalej szerokosci (tabular) — licznik nie "drzy" przy odliczaniu,
+     bo zmieniajace sie cyfry maja te sama szerokosc i srodek liczby nie skacze. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+#app {
+  height: 100dvh;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+/* Wersja gry — w głównym oknie, tuż NAD dolnym paskiem (nie na nim). Otwiera changelog. */
+/* --- gorny pasek (ticker / dalekopis) --- */
+.ticker {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.ticker .badge {
+  flex: none;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--bg);
+  /* odrobinę jaśniej niż czysty akcent — przycisk był trochę za ciemny */
+  background: color-mix(in srgb, var(--accent) 68%, var(--accent-strong));
+  padding: 3px 7px;
+  border-radius: 2px;
+  border: none;
+  font-family: var(--mono);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ticker .badge:hover {
+  filter: brightness(1.1);
+}
+.ticker-window {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+/* Plynne, ciagle przewijanie (GPU-only: transform). Tresc podwojona, przesuw o polowe = bezszwowo. */
+.ticker-stream {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation-name: dalekopis;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes dalekopis {
+  /* od lewej do prawej — tekst wyjezdza spod „DZIENNIK” i plynie w prawo */
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.ticker-stream .seg {
+  color: var(--dim);
+}
+.ticker-stream .seg.propaganda {
+  color: var(--accent-strong);
+}
+.ticker-stream .seg.notice {
+  color: #e0c87a;
+}
+.ticker-stream .seg.easter {
+  color: #b89cd8;
+}
+.ticker-stream .seg.advice {
+  color: #79c0d0;
+}
+.ticker-stream .sep {
+  color: var(--border);
+  margin: 0 18px;
+}
+
+/* --- srodek (gra) --- */
+.play {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr; /* waski/mobile: jedna kolumna (stack) */
+  gap: 16px;
+}
+/* Kolumny ukladu — na waskim ekranie zlewaja sie w jedna; na szerokim staja obok siebie,
+   dzieki czemu desktop WYKORZYSTUJE szerokosc, a nie zostawia 2/3 ekranu pustego. */
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+/* Lewa sekcja jako JEDEN kontener — rzeczy ważne/unikatowe/specjalne (klikanie, „Co dalej?",
+   Denominacja). Bez kolorowego paska u góry — tożsamość daje nagłówek z ikoną (jak inne moduły).
+   Wewnętrzne panele recesywne (tło panel-2). Uwaga #6. */
+.col-special {
+  gap: 12px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  align-self: start; /* naturalna wysokość panelu — bez sztucznego rozciągania w dół */
+}
+.col-special > .click-area,
+.col-special > .goals,
+.col-special > .prestige {
+  background: var(--panel-2);
+}
+/* Nagłówek sekcji siedzi na tle kontenera (nie recesywnym), z linią pod spodem — jak inne moduły.
+   margin-top: -2px kompensuje grubszy inset `.col-special` (ramka+padding), by linia pod „Pulpitem"
+   była na TYM SAMYM poziomie co w pozostałych kolumnach. */
+.col-special > .section-head {
+  margin-bottom: 0;
+  margin-top: -2px;
+}
+/* Desktop: trzy kolumny. Każda przewija się NIEZALEŻNIE — wysoka sekcja (maszyny) przewija TYLKO
+   siebie, nie pozostałe kolumny ani całej strony. Jedna sekcja nie wymusza dopasowania reszty. */
+@media (min-width: 920px) {
+  .play {
+    grid-template-columns: minmax(300px, 0.9fr) minmax(240px, 1fr) minmax(280px, 1.15fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: start; /* kolumny naturalnej wysokości, każda przewija się niezależnie */
+    overflow: hidden;
+    min-height: 0;
+  }
+  .col {
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+/* Szeroki desktop: lekko przesuniete proporcje kolumn (lewa stabilna, prawa szersza na zakupy). */
+@media (min-width: 1280px) {
+  .play {
+    grid-template-columns: minmax(330px, 0.85fr) minmax(280px, 1fr) minmax(320px, 1.1fr);
+  }
+}
+.boot {
+  color: var(--dim);
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* --- klikanie --- */
+.click-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.readout {
+  text-align: center;
+}
+.readout .amount {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+.readout .unit {
+  color: var(--dim);
+  letter-spacing: 1px;
+}
+.readout .rate {
+  color: var(--accent);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.readout .per-click {
+  color: var(--dim);
+}
+.big-click {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 280px;
+  padding: 16px 18px;
+  font-family: var(--mono);
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.06s ease,
+    filter 0.06s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  /* „uniesiony" guzik — daje czytelny efekt wciśnięcia (uwaga #3) */
+  box-shadow:
+    0 4px 0 0 color-mix(in srgb, var(--accent) 55%, #000),
+    0 6px 12px var(--shadow);
+}
+.big-click .click-icon {
+  display: inline-flex;
+  line-height: 0;
+}
+.big-click .click-label {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+/* Wciśnięcie: guzik realnie „opada" o 4 px i gaśnie cień — czujesz klik, nie samo zwężenie. */
+.big-click:active {
+  transform: translateY(4px) scale(0.99);
+  filter: brightness(0.95);
+  box-shadow:
+    0 0 0 0 color-mix(in srgb, var(--accent) 55%, #000),
+    0 2px 6px var(--shadow);
+}
+.pop {
+  position: absolute;
+  pointer-events: none;
+  font-size: 14px;
+  color: var(--accent-strong);
+  text-shadow: 0 1px 2px var(--shadow);
+  animation: floatUp 0.7s ease-out forwards;
+}
+@keyframes floatUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+/* --- generatory --- */
+/* „Moduł" — spójny wizualny kontener (nagłówek + zawartość = jedna rzecz). Uwaga #10. */
+.generators,
+.upgrades {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.gen-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.1s ease;
+  position: relative; /* dla pieczęci DLC w rogu (Faza 5D) */
+}
+/* Treść DLC (Faza 5D): subtelny, ROZPOZNAWALNY akcent paczki — kolor z manifestu (--pack-accent).
+   Rdzeń nie dostaje tej klasy, więc wygląda natywnie (bez szwu). */
+.gen-card.dlc {
+  border-left-color: var(--pack-accent, var(--accent));
+  box-shadow: inset 0 0 22px -16px var(--pack-accent, transparent);
+}
+.gen-stamp {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: inline-flex;
+  line-height: 0;
+  color: var(--dim);
+  opacity: 0.7;
+}
+.gen-stamp.official {
+  color: var(--pack-accent, var(--accent-strong));
+  opacity: 1;
+}
+.gen-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.gen-card.affordable:hover {
+  background: var(--panel-2);
+}
+.gen-card.affordable:active {
+  transform: scale(0.99);
+}
+.gen-card.locked {
+  border-left-color: var(--border);
+  opacity: 0.4;
+  cursor: default;
+}
+.gen-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.gen-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.gen-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.gen-name {
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+.gen-owned {
+  font-size: 18px;
+  color: var(--text);
+}
+.gen-flavor {
+  margin: 0;
+  font-size: 12px;
+  color: var(--dim);
+}
+.gen-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.gen-cost {
+  color: #e0c87a;
+}
+.gen-mult {
+  font-weight: 700;
+  color: var(--accent);
+}
+.gen-rate {
+  color: var(--accent);
+}
+
+/* --- naglowek sekcji --- */
+.section-head {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  font-weight: 700;
+  margin: 0 0 8px;
+  /* Stała wysokość nagłówka — linia oddzielająca siedzi na TYM SAMYM poziomie we wszystkich sekcjach,
+     niezależnie od zawartości (np. selektor x1/x10/x100/Max w „Maszynach" nie pogrubia już nagłówka). */
+  min-height: 24px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-head .section-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+}
+/* Nagłówek Maszyn z selektorem ile kupować (x1/x10/x100/Max) po prawej. */
+.gen-head-row {
+  justify-content: space-between;
+}
+.section-head-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.buy-amount {
+  display: inline-flex;
+  gap: 3px;
+}
+.buy-amount-btn {
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1; /* mieści się w wysokości tytułu — nie pogrubia nagłówka (linia zostaje na poziomie) */
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--dim);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.buy-amount-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.buy-amount-btn.active {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent-strong);
+}
+
+/* --- panel „Co dalej?” --- */
+.goals {
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.goal {
+  padding: 5px 0;
+}
+.goal + .goal {
+  border-top: 1px dashed var(--border);
+}
+.goal-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.goal-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+  flex: none;
+}
+.goal-horizon {
+  flex: none;
+  min-width: 58px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.goal-label {
+  font-weight: 700;
+  color: var(--accent-strong);
+  /* nie zawijaj i nie wychodź poza wiersz — przy długich nazwach skróć wielokropkiem,
+     żeby nazwa nigdy nie nachodziła na pasek ani na liczbę (uwaga: bug wizualny) */
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.goal-label.mystery {
+  color: #b89cd8;
+}
+.goal-detail {
+  flex: none;
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 13px;
+  color: #e0c87a;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.goal-bar {
+  height: 5px;
+  margin-top: 7px;
+  background: var(--panel-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.goal-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  /* krotki, liniowy — paski celow plyna (gladka wartosc 60 fps), bez skokow */
+  transition: width 0.12s linear;
+}
+
+/* --- ulepszenia --- */
+/* nagłówek/sterowanie panelu Ulepszeń (U1 — setki pozycji: licznik, szukajka, grupy zwijane) */
+.up-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.up-filter {
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+.up-filter:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.up-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.up-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.up-group-toggle {
+  appearance: none;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.up-caret {
+  color: var(--dim);
+  width: 0.9em;
+  display: inline-block;
+}
+.up-group-n {
+  color: var(--dim);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.up-buyall {
+  appearance: none;
+  flex: none;
+  background: var(--panel-2);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.up-buyall:hover {
+  border-color: var(--accent);
+}
+.upgrade-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+/* Sekcja „Ulepszenia" zostaje widoczna nawet bez dostępnych ulepszeń (placeholder zamiast znikania). */
+.upgrades-empty {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--dim);
+  background: var(--panel-2);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+.upgrade {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 3px solid #c9a23a;
+  border-radius: 4px;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.1s ease;
+}
+.upgrade:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.upgrade.affordable:hover {
+  background: var(--panel-2);
+}
+.upgrade.affordable:active {
+  transform: scale(0.99);
+}
+.upgrade-name {
+  font-weight: 700;
+  color: #e7cf86;
+}
+.upgrade-effect {
+  font-size: 12px;
+  color: var(--accent);
+}
+.upgrade-cost {
+  font-size: 13px;
+  color: #e0c87a;
+}
+
+/* --- prestiz (Denominacja) --- */
+.prestige {
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid #c2502f;
+  border-radius: 6px;
+}
+/* Aktywna doktryna ze Zjazdu PZPR (Faza 4B) — drobna informacja w panelu Denominacji. */
+.doktryna {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--dim);
+}
+.doktryna b {
+  color: var(--accent);
+}
+.doktryna.kryzys {
+  color: var(--danger);
+}
+.doktryna.kryzys b {
+  color: var(--danger);
+}
+.prestige-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.prestige-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.prestige-info .odz b {
+  color: #e7cf86;
+}
+.prestige-info .odz-bonus {
+  font-size: 12px;
+  color: var(--dim);
+}
+.prestige-info .odz-bonus b {
+  color: var(--accent-strong);
+}
+.prestige-gain b {
+  color: var(--accent-strong);
+}
+.prestige-actions {
+  display: flex;
+  gap: 6px;
+}
+.denom-btn {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--bg);
+  background: #c2502f;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.denom-btn:disabled {
+  background: var(--panel-2);
+  color: var(--dim);
+  border: 1px solid var(--border);
+  cursor: not-allowed;
+}
+.tree-btn {
+  font-family: var(--mono);
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.tree-btn:hover {
+  border-color: var(--accent);
+}
+
+/* --- okno „Dziedzictwo” (drzewo) --- */
+.tree-modal {
+  width: 100%;
+  max-width: 720px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  /* Stały kolor (wyjątek od stylu) — spójny z guzikiem „Denominacja": jasna czerwień #c2502f. */
+  border-top: 3px solid #c2502f;
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.tree-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tree-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent-strong);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tree-head-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+}
+/* Nagłówek okna z ikoną (Osiągnięcia, Kadra, …) */
+.win-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.win-head-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+}
+.tree-balance {
+  margin-left: auto;
+  color: #e7cf86;
+  font-weight: 700;
+}
+.tree-close {
+  font-family: var(--mono);
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 4px 9px;
+  cursor: pointer;
+}
+.tree-hint {
+  margin: 6px 0 10px;
+  font-size: 12px;
+  color: var(--dim);
+}
+/* Trzy konary jako JEDNA siatka: kolumna = konar, wiersz = ten sam szczebel we wszystkich konarach.
+   Dzięki wspólnym wierszom każdy rząd kafelków ma równą wysokość — nic się nie „krzywi". */
+.tree-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 10px;
+  align-items: stretch;
+  align-content: start;
+}
+.tree-col-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+}
+/* Subtelna, ale jednoznaczna kolorystyka każdego konaru (Faza szlifu): Aparat = zieleń, R&D = błękit,
+   Rynek = bursztyn. Tło kafelka leciutko podbarwione + kolor tytułu kolumny. Pasek statusu (lewa
+   krawędź: czerwony/zielony/przygaszony) ZOSTAJE niezależny — to dwie różne informacje. */
+.tree-col-title.branch-aparat {
+  color: #8fe39a;
+  border-bottom-color: color-mix(in srgb, #5fa86a 45%, var(--border));
+}
+.tree-col-title.branch-rd {
+  color: #8fbfe6;
+  border-bottom-color: color-mix(in srgb, #5a8fc0 45%, var(--border));
+}
+.tree-col-title.branch-rynek {
+  color: #f0c869;
+  border-bottom-color: color-mix(in srgb, #d9a441 45%, var(--border));
+}
+.tree-node.branch-aparat {
+  background: color-mix(in srgb, #5fa86a 7%, var(--panel-2));
+}
+.tree-node.branch-rd {
+  background: color-mix(in srgb, #5a8fc0 7%, var(--panel-2));
+}
+.tree-node.branch-rynek {
+  background: color-mix(in srgb, #d9a441 7%, var(--panel-2));
+}
+.tree-node {
+  position: relative; /* dla łącznika ::before między kolejnymi węzłami konaru */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* jednakowy rozmiar — najwyższy węzeł (np. „Instytut badawczy") wyznacza minimum, krótsze się
+     dociągają, by kolumny się nie rozjeżdżały. Stopka dzięki margin-top:auto siedzi na dole. */
+  min-height: 104px;
+  text-align: left;
+  padding: 9px 11px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  /* Pasek statusu: domyślnie CZERWONY = jeszcze nie wykupione / nie na maksie (wyróżnia się).
+     Wykupione na maks → zielony; zablokowane → przygaszony. */
+  border-left: 4px solid #c2502f;
+  border-radius: 4px;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.1s ease;
+}
+.tree-node.available:hover {
+  filter: brightness(1.15); /* rozjaśnia, ZACHOWUJĄC odcień konaru (zamiast nadpisywać tło) */
+}
+.tree-node.available:active {
+  transform: scale(0.99);
+}
+.tree-node:disabled {
+  cursor: not-allowed;
+}
+.tree-node.owned {
+  border-left-color: var(--accent-strong); /* wykupione na maks — zielony */
+  opacity: 0.85;
+}
+.tree-node.unaffordable {
+  opacity: 0.7; /* nadal czerwony pasek (nie na maksie), tylko przygaszony brakiem stać */
+}
+.tree-node.locked {
+  opacity: 0.4;
+  border-left-color: var(--border); /* zablokowane — przygaszony pasek */
+}
+/* Łańcuch — krótka pionowa kreska w przerwie nad węzłem (każdy nie-korzeń wymaga poprzedniego).
+   Pokazuje zależności w konarze, tak jak przed przejściem na siatkę. */
+.tree-node.linked::before {
+  content: '';
+  position: absolute;
+  top: -8px; /* w row-gap (8px) nad kafelkiem */
+  left: 50%;
+  width: 2px;
+  height: 8px;
+  background: var(--border);
+  transform: translateX(-1px);
+}
+.tree-node-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.tree-node-name {
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+/* Wskaźnik poziomu wielopoziomowego węzła (X/Y). */
+.tree-node-lvl {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-variant-numeric: tabular-nums;
+}
+.tree-node.owned .tree-node-lvl {
+  background: var(--accent-strong);
+}
+.tree-node-effect {
+  font-size: 12px;
+  color: var(--accent);
+}
+.tree-node-foot {
+  font-size: 12px;
+  margin-top: auto; /* stopka (koszt/wykupione) zawsze na dole — węzły wyglądają równo */
+}
+.tree-node-foot.cost {
+  color: #e7cf86;
+}
+.tree-node-foot.owned {
+  color: var(--accent-strong);
+}
+.tree-node-foot.locked {
+  color: var(--dim);
+}
+.tree-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.tree-done {
+  font-family: var(--mono);
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.tree-done:hover {
+  border-color: var(--accent);
+}
+.newrun-btn {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: 5px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+.newrun-btn:hover {
+  background: var(--accent-strong);
+}
+
+/* --- plansza przejscia „nowa pieciolatka” --- */
+.newrun-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg);
+  pointer-events: none;
+  animation: newrunFade 1.8s ease-in-out forwards;
+}
+.newrun-text {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--accent-strong);
+}
+.newrun-sub {
+  color: var(--dim);
+}
+@keyframes newrunFade {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* --- zdarzenie (depesza) --- */
+.event-modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 3px solid #5a8fb0;
+  border-radius: 6px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.event-badge {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--bg);
+  background: #5a8fb0;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.event-title {
+  margin: 8px 0 6px;
+  font-size: 19px;
+  color: var(--accent-strong);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.event-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: #5a8fb0;
+  flex-shrink: 0;
+}
+.event-body {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.event-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.event-opt {
+  font-family: var(--mono);
+  text-align: left;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.event-opt:hover {
+  background: #1b2415;
+  border-left-color: var(--accent-strong);
+}
+
+/* --- Leksykon --- */
+.lex-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 3px solid #b89cd8;
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.lex-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lex-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent-strong);
+}
+.lex-count {
+  margin-left: auto;
+  color: #b89cd8;
+  font-weight: 700;
+}
+.lex-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lex-entry {
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid #b89cd8;
+  border-radius: 4px;
+}
+.lex-entry.locked {
+  opacity: 0.4;
+  border-left-color: var(--border);
+}
+.lex-name {
+  font-weight: 700;
+  color: var(--accent-strong);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lex-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+}
+.lex-entry.locked .lex-name {
+  color: var(--dim);
+}
+.lex-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* zakladki Leksykonu (Hasla / Doktryny) */
+.lex-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+.lex-tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--dim);
+  font: inherit;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.lex-tab:hover {
+  color: var(--text);
+}
+.lex-tab.active {
+  color: #b89cd8;
+  border-bottom-color: #b89cd8;
+}
+
+/* wpis doktryny w Leksykonie */
+.lex-entry.doctrine.active {
+  border-left-color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px var(--accent-strong);
+}
+.dok-axis {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+.dok-badge {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+.dok-badge.active {
+  color: #0d1b0d;
+  background: var(--accent-strong);
+}
+.dok-badge.debt {
+  color: #c2502f;
+  border: 1px solid #c2502f;
+}
+.dok-effect {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* --- osiagniecia --- */
+.ach-modal {
+  width: 100%;
+  max-width: 760px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 3px solid #c9a23a;
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.ach-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ach-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent-strong);
+}
+.ach-count {
+  margin-left: auto;
+  color: #e7cf86;
+  font-weight: 700;
+}
+.ach-scroll {
+  overflow-y: auto;
+  margin-top: 8px;
+}
+.ach-cat {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin: 12px 0 6px;
+}
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.ach-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 9px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 4px;
+}
+.ach-badge.earned {
+  border-left-color: #c9a23a;
+}
+.ach-badge.locked {
+  opacity: 0.42;
+}
+.ach-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ach-badge-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.ach-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ach-badge.locked .ach-name {
+  color: var(--dim);
+}
+.ach-desc {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* --- ceremonia Denominacji --- */
+.ceremony-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: ceremonyFade 0.4s ease-out;
+}
+@keyframes ceremonyFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.ceremony-box {
+  position: relative;
+  text-align: center;
+  padding: 28px 32px;
+}
+/* miekka poswiata na cala nakladke (bez twardych krawedzi — nieprzycinana, rozmyta) */
+.ceremony-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(143, 227, 154, 0.22), transparent 55%);
+  filter: blur(24px);
+  animation: ceremonyPulse 2.6s ease-in-out infinite;
+}
+@keyframes ceremonyPulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+.ceremony-title {
+  position: relative;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--accent-strong);
+  animation: ceremonyRise 0.5s ease-out;
+}
+.ceremony-sub {
+  position: relative;
+  color: var(--dim);
+  margin-top: 6px;
+}
+.ceremony-gain {
+  position: relative;
+  margin-top: 18px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #e7cf86;
+  animation: ceremonyRise 0.7s ease-out;
+}
+@keyframes ceremonyRise {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.ceremony-btn {
+  position: relative;
+  margin-top: 24px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: 5px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+
+/* --- dolny pasek (status) --- */
+.status-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+/* Dolny pasek walut zostaje WIDOCZNY i OSTRY (ponad nakładką) podczas okien, w których robi się
+   zakupy: minigra (uwaga #4), Załatwianie i Kantor — gracz musi widzieć stan kasy. */
+body.keep-bar .status-bar {
+  z-index: 40;
+  border-top-color: var(--accent);
+}
+.status-bar .resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.status-bar .res {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-bar .res-icon {
+  display: inline-flex;
+  line-height: 0;
+  color: var(--accent);
+}
+.status-bar .res b {
+  color: var(--accent-strong);
+}
+.status-bar .res i {
+  color: var(--accent);
+  font-style: normal;
+  font-size: 12px;
+}
+.status-bar .actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.status-bar button {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.status-bar button:hover {
+  border-color: var(--accent);
+}
+.status-bar button.danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* --- modal (potwierdzenia w klimacie gry, nie przez przegladarke) --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  /* gra w tle przyciemniona I rozmyta */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+/* Gdy dolny pasek walut zostaje WIDOCZNY (Załatwianie/Kantor/Dyplomacja/Taśma) — pasek jest nad
+   nakładką (z-index), więc okno nie może wchodzić pod niego. Nakładka rezerwuje wysokość stopki,
+   a okno (max-height + overflow) mieści się i przewija NAD paskiem. */
+body.keep-bar .modal-overlay {
+  bottom: 56px;
+}
+/* okno informacyjne (np. raport offline) — z krzyzykiem i przyciskiem potwierdzenia */
+.info-modal {
+  position: relative;
+  max-width: 420px;
+  border-top-color: var(--accent);
+}
+.info-modal .info-sub {
+  color: var(--dim);
+  margin: 0 0 10px;
+}
+.info-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.info-list li {
+  padding: 3px 0;
+  color: var(--text);
+}
+.info-list li b {
+  color: var(--accent-strong);
+}
+.modal-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--mono);
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.modal-x:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--danger);
+  border-radius: 6px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.modal h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--accent-strong);
+}
+.modal p {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: 14px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.modal-actions button {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.modal-actions button:hover {
+  border-color: var(--accent);
+}
+.modal-actions button.danger {
+  color: #ffd9cf;
+  border-color: var(--danger);
+}
+.modal-actions button.danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* --- toast --- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 64px;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px var(--shadow);
+  z-index: 20;
+}
+
+@media (max-width: 480px) {
+  .status-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* === Faza 3C: zywy UI, juice, CRT, ustawienia (wszystko przelaczalne) === */
+
+/* Globalny wylacznik animacji (Ustawienia → Animacje off): zatrzymuje wszystko poza danymi. */
+body:not(.anim-on) *,
+body:not(.anim-on) *::before,
+body:not(.anim-on) *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Oddychanie — wylacznie transform (GPU). Tylko na elementach-akcentach, nie na wszystkim. */
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+}
+.live-ui .big-click {
+  animation: breathe 3.6s ease-in-out infinite;
+}
+.live-ui .denom-btn:not(:disabled) {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+/* „Cień banku” — zablokowany teaser lekko migocze (operacjonalizacja PLAN 1.3.1/8). */
+@keyframes shadowPulse {
+  0%,
+  100% {
+    opacity: 0.32;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.live-ui .gen-card.locked {
+  animation: shadowPulse 2.4s ease-in-out infinite;
+}
+
+/* Poświata przy zakupie (jednorazowa). */
+@keyframes buyPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  40% {
+    transform: scale(1.025);
+    box-shadow: 0 0 12px 2px var(--glow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+/* Krotka i RESTARTOWALNA — przy szybkim klikaniu kazdy zakup daje czysty blysk
+   (GeneratorCard wymusza restart animacji, a nie czeka az poprzednia dobiegnie). */
+.gen-card.pulse-buy {
+  animation: buyPulse 0.2s ease-out;
+}
+
+/* Plansza startowa (boot) — raz przy wejsciu. */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg);
+  color: var(--accent);
+  font-family: var(--mono);
+  letter-spacing: 1px;
+  animation: bootFade 1.7s ease-in-out forwards;
+}
+.boot-line {
+  font-size: 14px;
+}
+.boot-line.dim {
+  color: var(--dim);
+}
+.boot-line.ok {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+@keyframes bootFade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Filtr CRT — nakladka ambientu (PLAN 10.2). Domyslnie off; intensywnosc z --crt. */
+.crt-overlay {
+  display: none;
+}
+body.crt-on .crt-overlay {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  pointer-events: none;
+  /* Pelny zakres suwaka jest WIDOCZNY: od ledwie muśnięcia (0,1) po mocny monitor (1,0). */
+  opacity: calc(0.1 + var(--crt, 0.5) * 0.9);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.32) 3px
+    ),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 54%, rgba(0, 0, 0, 0.6) 100%);
+  mix-blend-mode: multiply;
+}
+
+/* Ustawienia (panel) */
+.set-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 86vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.set-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.set-head h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent-strong);
+}
+.set-head .tree-close {
+  margin-left: auto;
+}
+.set-section {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 14px;
+  cursor: pointer;
+}
+.set-row.slider {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.set-row.slider input[type='range'] {
+  width: 100%;
+}
+.set-row select {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}

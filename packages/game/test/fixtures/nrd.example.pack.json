@@ -1,0 +1,102 @@
+{
+  "manifest": {
+    "id": "nrd",
+    "name": "NRD — Robotron",
+    "version": "1.0.0",
+    "author": "przyklad",
+    "description": "Enerdowska elektronika zza Odry: Robotron i klon Z80 (U880). Przykładowa paczka DLC napisana WYŁĄCZNIE wg DLC.md (dane, nie kod) — bramka Fazy 5.",
+    "schemaVersion": 1,
+    "requires": [],
+    "tags": ["dlc", "nrd", "elektronika"],
+    "priority": 10,
+    "visualIdentity": { "accentColor": "#b0563a", "icon": "robotron", "font": null, "texture": null }
+  },
+  "generators": [
+    {
+      "id": "nrd.robotron",
+      "name": "Robotron K1520",
+      "flavor": "Enerdowski przemysł komputerowy — solidny, ciężki, zza Odry.",
+      "costResource": "cykle",
+      "cost": "200000 * 1.16 ^ posiadane",
+      "outputResource": "cykle",
+      "production": "120 * (1 + 0.02 * posiadane.osrodek)",
+      "unlock": "posiadane.odra1305 >= 3"
+    },
+    {
+      "id": "nrd.u880",
+      "name": "U880 (klon Z80)",
+      "flavor": "Enerdowski klon Z80 — bratnia myśl techniczna na twardą walutę.",
+      "costResource": "dewizy",
+      "cost": "500 * 1.18 ^ posiadane",
+      "outputResource": "dewizy",
+      "production": "3 * (1 + 0.03 * posiadane.nrd.robotron)",
+      "unlock": "posiadane.nrd.robotron >= 5"
+    }
+  ],
+  "upgrades": [
+    {
+      "id": "nrd.u_robotron_szyna",
+      "name": "Wspólna szyna RWPG",
+      "flavor": "Standaryzacja podzespołów — Robotron rusza pełną parą.",
+      "costResource": "dewizy",
+      "cost": "2000",
+      "unlock": "posiadane.nrd.robotron >= 10",
+      "effects": [{ "type": "multiplyProduction", "target": "generator:nrd.robotron", "value": "2" }]
+    },
+    {
+      "id": "nrd.u_odra_wsparcie",
+      "name": "Wsparcie dla Odry",
+      "flavor": "Enerdowskie podzespoły wzmacniają rodzimą Odrę — gdy masz już park Robotronów.",
+      "costResource": "dewizy",
+      "cost": "8000",
+      "unlock": "posiadane.nrd.robotron >= 8",
+      "effects": [
+        { "type": "multiplyProduction", "target": "generator:odra1305", "value": "1.5", "condition": "posiadane.nrd.robotron >= 8" }
+      ]
+    }
+  ],
+  "synergies": [
+    {
+      "requiresPack": "zsrr",
+      "note": "Wspólne mechanizmy RWPG — bonus aktywny TYLKO gdy obecny jest też pakiet ZSRR (łagodna degradacja).",
+      "effects": [{ "type": "multiplyProduction", "target": "resource:cykle", "value": "1.15" }]
+    }
+  ],
+  "patches": [
+    { "target": "generator:spectrum", "set": { "flavor": "ZX Spectrum — a obok niego, zza Odry, zerka Robotron." } },
+    { "target": "generator:meritum", "addCondition": "posiadane.nrd.robotron >= 1" }
+  ],
+  "lexicon": [
+    {
+      "id": "nrd.lex_robotron",
+      "name": "Robotron",
+      "unlockedBy": "generator:nrd.robotron",
+      "text": "Kombinat Robotron — wschodnioniemiecki gigant elektroniki, dostawca komputerów i podzespołów dla całego bloku wschodniego."
+    }
+  ],
+  "achievements": [
+    {
+      "id": "nrd.a_robotron_10",
+      "name": "Bratnia produkcja",
+      "description": "Postaw 10 Robotronów.",
+      "condition": "posiadane.nrd.robotron >= 10",
+      "category": "Maszyny"
+    }
+  ],
+  "events": [
+    {
+      "id": "nrd.ev_delegacja",
+      "title": "Delegacja z Drezna",
+      "body": "Towarzysze z Robotronu proponują wspólną linię montażową. Przyjmujemy podzespoły?",
+      "trigger": "posiadane.nrd.robotron >= 1 and flaga.nrd.umowa == 0",
+      "once": true,
+      "options": [
+        { "label": "Podpisujemy umowę", "effects": [{ "type": "setFlag", "flag": "nrd.umowa", "value": "1" }] },
+        { "label": "Dziękujemy, sami damy radę", "effects": [] }
+      ]
+    }
+  ],
+  "ticker": [
+    { "id": "nrd.tick_1", "stream": "propaganda", "text": "Bratnia NRD melduje: plan dostaw podzespołów wykonany w 110%!" }
+  ]
+}

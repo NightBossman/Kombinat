@@ -1,0 +1,21 @@
+{
+  "name": "kombinat",
+  "private": true,
+  "version": "0.4.0",
+  "type": "module",
+  "description": "Kombinat — gra incremental w realiach poznego PRL. Monorepo: rdzen gry + wspoldzielony modul schematu.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @kombinat/game run dev",
+    "build": "npm --workspace @kombinat/game run build",
+    "preview": "npm --workspace @kombinat/game run preview",
+    "dev:studio": "npm --workspace @kombinat/studio run dev",
+    "build:studio": "npm --workspace @kombinat/studio run build",
+    "sign:dlc": "node packages/studio/tools/sign-dlc.mjs",
+    "audit:studio": "node packages/studio/tools/audit-bundle.mjs",
+    "test": "npm --workspace @kombinat/shared run test && npm --workspace @kombinat/game run test && npm --workspace @kombinat/studio run test",
+    "typecheck": "npm --workspace @kombinat/shared run typecheck && npm --workspace @kombinat/game run typecheck && npm --workspace @kombinat/studio run typecheck"
+  }
+}

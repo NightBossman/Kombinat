@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.claude/
+.DS_Store
+*.local
+.vite/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+# Klucze podpisu DLC (Faza 5.5D) — PRYWATNY klucz NIGDY do repo (ŻELAZNA REGUŁA STUDIO §7.3).
+# Domyślnie generowany POZA repo (~/.kombinat-dlc-keys), ale na wszelki wypadek ignorujemy też tu.
+*.private.jwk
+.kombinat-dlc-keys/
+.secrets/

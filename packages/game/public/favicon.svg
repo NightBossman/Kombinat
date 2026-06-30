@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Kombinat">
+  <!-- Godło Kombinatu: złoty tryb (przemysł) + czerwona gwiazda (PRL) na ciemnym tle. -->
+  <rect x="2" y="2" width="60" height="60" rx="13" fill="#0d130d" stroke="#27331f" stroke-width="2"/>
+  <!-- Zęby trybu -->
+  <g fill="#d9b25a">
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(45 32 32)"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(90 32 32)"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(135 32 32)"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(180 32 32)"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(225 32 32)"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(270 32 32)"/>
+    <rect x="29.5" y="5" width="5" height="8" rx="1.5" transform="rotate(315 32 32)"/>
+  </g>
+  <!-- Pierścień trybu -->
+  <circle cx="32" cy="32" r="20" fill="#11180f" stroke="#d9b25a" stroke-width="4"/>
+  <!-- Czerwona gwiazda -->
+  <polygon points="32,20 34.82,28.12 43.41,28.29 36.57,33.48 39.05,41.71 32,36.8 24.95,41.71 27.43,33.48 20.59,28.29 29.18,28.12" fill="#cf3a2c"/>
+</svg>
