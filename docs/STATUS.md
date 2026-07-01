@@ -299,7 +299,17 @@ do liczby CZTEROCYFROWEJ (≥1000), „by się nie kończyły", z coraz większ�
   przybyło kadry/doktryn/krajów; suma ≥1000. Zaktualizowany `phase1` (kamień: tick 0.3 + tempo ≥×2, bo park
   też wpada). 252 testy (168 game+61 shared+23 studio), typecheck+build czyste, na żywo gra wstaje, konsola
   czysta. **Inicjatywa U1–U5 ZROBIONA — zostaje U6 (bramka całości: stress/balans/ton/test).**
-- ⏳ **U6 — Bramka całości** (stress test, balans przez wiele Denominacji, ton, potwierdzenie liczby; test właściciela).
+- ✅ **U6 — Bramka całości — ZALICZONA, czeka na ręczny test właściciela.** Nowy `phaseU6.test.ts` (+7)
+  dowodzi, że przy PEŁNEJ zawartości (wszystkie ulepszenia wykupione, całe drzewo na maks, wszystkie
+  kamienie i osiągnięcia, cała kadra) gra jest: **wydajna** — `recomputeModifiers` **1,06 ms** (budżet 10),
+  migawka **0,88 ms** (budżet 30), tick **0,08 ms** (budżet 15); **rozsądna w zapisie** — surowy JSON stanu
+  **31,9 KB** (budżet 400, potem kompresja fflate); **stabilna** — żadne tempo nie jest NaN, **3× Denominacja**
+  z pełną zawartością nie wywala i zachowuje trwałe drzewo, ulepszenia się resetują; **klimatyczna** —
+  nazwy generowane bez „#"/undefined. **Potwierdzenie liczby: 1175** trwałych bonusów (≥1000 ✅). Żadnej
+  optymalizacji nie trzeba było dokładać — wcześniejsze cache (koszt/opis ulepszeń) + throttling kamieni
+  już dają ogromny zapas. 259 testów (175 game+61 shared+23 studio), typecheck+build czyste.
+  **INICJATYWA U1–U6 ZAMKNIĘTA (MVP) — czeka na ręczny test właściciela; potem można ruszyć nowy plik
+  mechanik/bajerów, a następnie Fazę 6.**
 **Zasady:** to wciąż DANE (generatory jak `buildAchievements`); rodziny klimatyczne, nie wypełniacz; late
 game zawsze ma co kupować; ID generowane `rdzen.gu_*`/`gt_*`/`gm_*` (bez kolizji z ręcznymi). NIE zaczynać
 U1 bez zielonego światła.
@@ -455,7 +465,7 @@ Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
 ---
 
 ## Stan techniczny
-- Testy: **252 zielone** (168 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety).
+- Testy: **259 zielonych** (175 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety).
 - Studio DLC: osobny workspace `packages/studio` (port 5174). `npm run dev:studio`, `npm run build:studio`.
 - Podpis DLC (5.5D): `npm run sign:dlc -- keygen|sign|verify` (lub `node packages/studio/tools/sign-dlc.mjs`),
   audyt bundla `npm run audit:studio`. Klucz PUBLICZNY wbudowany w `shared/trust.ts`; PRYWATNY offline w
