@@ -26,8 +26,12 @@ function maxed(): Engine {
   for (const [id, n] of registry.treeNodes) e.state.treeNodes[id] = n.levels ?? 1; // CAŁE drzewo na maks
   for (const id of registry.milestones.keys()) e.state.milestones[id] = true; // WSZYSTKIE kamienie
   for (const id of registry.characters.keys()) e.state.characters[id] = true; // cała kadra
+  // WSZYSTKIE osiągnięcia ustawiamy WPROST z rejestru — nie przez checkAchievements(), które przyznałoby
+  // tylko te, których warunek spełnia syntetyczny stan (pominęłoby m.in. osiągnięcia za denominacje, czas
+  // gry i liczniki minigier). computeModifiers sumuje mnożniki tylko dla state.achievements[id], więc bez
+  // tego bramka mierzyłaby LŻEJSZY przypadek niż „pełna zawartość".
+  for (const id of registry.achievements.keys()) e.state.achievements[id] = true;
   e.state.flags['osiagniecia_mnoznik'] = 1; // najcięższa ścieżka: mnożniki z osiągnięć aktywne
-  e.checkAchievements();
   e.recomputeModifiers();
   return e;
 }
@@ -35,6 +39,10 @@ function maxed(): Engine {
 describe('U6 — wydajność przy pełnej zawartości', () => {
   it('recomputeModifiers (suma setek ulepszeń+kamieni+osiągnięć) jest tanie', () => {
     const e = maxed();
+    // gwarancja, że mierzymy PEŁNĄ zawartość: wszystkie ulepszenia, kamienie i osiągnięcia są zaliczone
+    expect(Object.keys(e.state.upgrades).length).toBe(e.registry.upgrades.size);
+    expect(Object.keys(e.state.milestones).length).toBe(e.registry.milestones.size);
+    expect(Object.keys(e.state.achievements).length).toBe(e.registry.achievements.size);
     const N = 200;
     const t0 = performance.now();
     for (let i = 0; i < N; i++) e.recomputeModifiers();
