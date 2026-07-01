@@ -32,6 +32,8 @@ export const CORE_COUNTRY_IDS = [
   'nrd',
   'wegry',
   'czechoslowacja',
+  'bulgaria',
+  'kuba',
   'japonia',
   'usa',
   'rfn',

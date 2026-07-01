@@ -10,7 +10,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: APP_VERSION, // 0.4.0
+    version: APP_VERSION, // 0.4.1
+    date: '2026-07-01',
+    items: [
+      'Dyplomacja: każdy kraj w bloku ma teraz INNĄ premię (koszty, produkcja, cykle, dewizy, klikanie, „po trochu").',
+      'Nowy kraj RWPG: Kuba. Opisy krajów powiązane z danym państwem.',
+      'Widać, jaką korzyść da relacja jeszcze przed jej zacieśnieniem; postęp pokazywany z przecinkiem.',
+      'Kraj z relacją na maksie ma teraz wyróżniającą obwódkę.',
+      'Otwarte okno (Kadra, Statystyki, Leksykon, minigry…) zamkniesz ponownym kliknięciem jego guzika.',
+      'W oknie Kadra widać dolny pasek walut (bez przyciemnienia), jak w innych oknach.',
+    ],
+  },
+  {
+    version: '0.4.0',
     date: '2026-06-30',
     items: [
       'Wielka rozbudowa ulepszeń — łącznie ponad 1000 trwałych bonusów (ulepszenia, drzewo, kamienie milowe).',

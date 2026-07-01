@@ -284,6 +284,8 @@ export interface RelationView {
   /** Aktualny poziom relacji 0..max. */
   relation: number;
   max: number;
+  /** Postęp relacji w % z jednym miejscem po przecinku (np. „0,5") — by kroki <1% były widoczne. */
+  relPct: string;
   /** Bieżący bonus z relacji opisany słownie (np. „Koszty −18%"). */
   effectText: string;
   /** Koszt zacieśnienia o krok (sformatowany) + jednostka (dewizy). */

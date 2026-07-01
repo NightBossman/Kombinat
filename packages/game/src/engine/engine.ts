@@ -293,6 +293,7 @@ export class Engine {
     return this.state.clickPower
       .add(this.mods.clickFlatAdd)
       .mul(this.mods.prodGlobalMul)
+      .mul(this.mods.clickMul) // premia dyplomatyczna 'click'
       .mul(this.buffMul('click')); // np. „czyn społeczny" ×777 (uwaga #21)
   }
 
@@ -758,12 +759,24 @@ export class Engine {
     return true;
   }
 
+  // Opis PREMII kraju. Nawet przy relacji zerowej pokazujemy, JAKA to będzie korzyść (kierunek premii),
+  // zachowując precyzyjną uwagę „(relacja zerowa)" — zamiast bezużytecznego „Brak korzyści".
   private diplomacyEffectText(scope: string, factor: number): string {
-    if (factor <= 0) return 'Brak korzyści (relacja zerowa)';
+    const zero = factor <= 0;
+    const note = ' (relacja zerowa)';
     const pct = Math.round(factor * 100);
-    if (scope === 'cost') return `Koszty −${pct}%`;
-    if (scope === 'dewizy') return `Dewizy +${pct}%`;
-    return `Produkcja +${pct}%`;
+    switch (scope) {
+      case 'cost': return zero ? `Koszty ↓${note}` : `Koszty −${pct}%`;
+      case 'prod': return zero ? `Produkcja ↑${note}` : `Produkcja +${pct}%`;
+      case 'dewizy': return zero ? `Dewizy ↑${note}` : `Dewizy +${pct}%`;
+      case 'cykle': return zero ? `Cykle ↑${note}` : `Cykle +${pct}%`;
+      case 'click': return zero ? `Klikanie ↑${note}` : `Klikanie +${pct}%`;
+      case 'all': {
+        const p2 = Math.round((factor / 2) * 100);
+        return zero ? `Koszty ↓ i produkcja ↑${note}` : `Koszty −${p2}% i produkcja +${p2}%`;
+      }
+      default: return zero ? `Korzyść${note}` : `Bonus +${pct}%`;
+    }
   }
 
   // --- prestiz (Denominacja) -------------------------------------------------
@@ -1411,6 +1424,8 @@ export class Engine {
           benefit: d.benefit,
           relation: Math.round(rel),
           max,
+          // Postęp z jednym miejscem po przecinku — by kroki <1% też były WIDOCZNE (przecinek PL).
+          relPct: ((rel / max) * 100).toFixed(1).replace('.', ','),
           effectText: this.diplomacyEffectText(d.scope, rel * d.perPoint),
           cost: formatNumber(cost),
           costUnit: pluralizePL(cost.toNumber(), dewForms2),

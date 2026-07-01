@@ -6,6 +6,20 @@ wersjonowanie [SemVer](https://semver.org/lang/pl/). Gra jest **w budowie (pre�
 > Numer wersji żyje w trzech miejscach i musi być spójny: `packages/game/src/version.ts` (`APP_VERSION`),
 > ten plik oraz `package.json`. W grze wersję widać w oknie **Statystyki** (nagłówek + „Historia zmian").
 
+## [0.4.1] — 2026-07-01
+
+### Dodane
+- **Dyplomacja — nowe premie:** w obrębie jednego bloku każdy kraj ma teraz **inną** premię
+  (koszty / produkcja / cykle / dewizy / klikanie / „po trochu"); premia może się powtarzać tylko między
+  blokami. Nowy kraj RWPG: **Kuba**. Opisy krajów powiązane z konkretnym państwem.
+
+### Zmienione / naprawione
+- Dyplomacja: przed zacieśnieniem relacji widać już, **jaką korzyść** kraj daje (zamiast „Brak korzyści");
+  postęp relacji pokazywany z **miejscem po przecinku** (widać kroki <1%); kraj z relacją na maksie ma
+  wyróżniającą **obwódkę**.
+- Otwarte okno (Kadra, Statystyki, Leksykon, minigry…) można **zamknąć ponownym kliknięciem** jego guzika.
+- Okno **Kadra** pokazuje dolny pasek walut (bez przyciemnienia), spójnie z innymi oknami.
+
 ## [0.4.0] — 2026-06-30
 
 ### Dodane
@@ -35,5 +49,6 @@ wersjonowanie [SemVer](https://semver.org/lang/pl/). Gra jest **w budowie (pre�
 - Wielkie systemy historyczne: Załatwianie i łapówki, Zjazd PZPR z doktrynami, dyplomacja bloków.
 - Ekosystem DLC: bezpieczny język formuł, hooki wpinania, model zaufania (podpisy), tożsamość wizualna paczek.
 
+[0.4.1]: https://github.com/NightBossman/Kombinat
 [0.4.0]: https://github.com/NightBossman/Kombinat
 [0.3.0]: https://github.com/NightBossman/Kombinat

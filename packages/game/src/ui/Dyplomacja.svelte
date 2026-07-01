@@ -32,12 +32,12 @@
             <p class="dyp-bloc-desc">{bl.desc}</p>
             <div class="dyp-list">
               {#each list as r (r.id)}
-                <div class="dyp-country">
+                <div class="dyp-country" class:maxed={r.atMax}>
                   <div class="dyp-country-head">
-                    <span class="dyp-country-name">{r.name}</span>
-                    <span class="dyp-country-rel">{r.relation}/{r.max}</span>
+                    <span class="dyp-country-name">{r.name}{#if r.atMax}<span class="dyp-max-badge" title="Sojusz zacieśniony na maksa">★</span>{/if}</span>
+                    <span class="dyp-country-rel">{r.relation}/{r.max} · {r.relPct}%</span>
                   </div>
-                  <div class="dyp-bar"><div class="dyp-bar-fill" style="width:{Math.round((r.relation / r.max) * 100)}%"></div></div>
+                  <div class="dyp-bar"><div class="dyp-bar-fill" style="width:{(r.relation / r.max) * 100}%"></div></div>
                   <span class="dyp-benefit">{r.benefit}</span>
                   <span class="dyp-effect">{r.effectText}</span>
                   <button
@@ -119,6 +119,16 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     font-family: var(--mono);
+  }
+  /* Kraj z relacją na maksie — złota obwódka + poświata, żeby rzucał się w oczy jako „wymaksowany". */
+  .dyp-country.maxed {
+    border-color: #e7cf86;
+    box-shadow: 0 0 0 1px #e7cf86, 0 0 12px rgba(231, 207, 134, 0.35);
+  }
+  .dyp-max-badge {
+    margin-left: 6px;
+    color: #e7cf86;
+    font-size: 13px;
   }
   .dyp-country-head {
     display: flex;
