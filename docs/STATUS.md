@@ -321,6 +321,24 @@ PWA/desktop + Firebase sync. **Odłożona** do czasu rozbudowy ulepszeń (decyzj
 
 ## Rundy szlifu (poza fazami — na życzenie właściciela po testach)
 Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
+- ✅ **2026-07-01 — Dyplomacja + Kadra + zamykanie okien (wersja 0.4.1) — czeka na test:**
+  - **Unikalne premie w bloku:** rozszerzone `DiplomacyDef.scope` (dodane `cykle`/`click`/`all`; walidator
+    pack.ts nie sprawdzał enuma → Studio zgodne bez zmian). Silnik: nowa dźwignia `clickMul` (+clickPower),
+    `computeModifiers` obsługuje 6 premii. Treść: w KAŻDYM bloku każdy kraj ma inną premię — Wschód: ZSRR
+    cost / Czechosłowacja prod / NRD cykle / Węgry dewizy / Bułgaria click / **Kuba all** (nowy 6. kraj RWPG);
+    Zachód: Japonia prod / RFN cost / USA dewizy. Opisy (flavor+benefit) powiązane z danym krajem.
+  - **Czytelność:** `diplomacyEffectText` przy relacji zerowej pokazuje KIERUNEK premii (np. „Koszty ↓
+    (relacja zerowa)") zamiast „Brak korzyści". Nowe `RelationView.relPct` (postęp % z 1 miejscem po
+    przecinku, przecinek PL) — widać kroki <1%; pasek postępu ułamkowy (bez Math.round). Kraj na maksie:
+    złota obwódka + ★ (`.dyp-country.maxed`).
+  - **Kadra:** `kadraOpen` dołączone do `keep-bar` (App.svelte) → dolny pasek walut widoczny i bez
+    przyciemnienia, jak w Kantorze/Załatwianiu/Dyplomacji.
+  - **Zamykanie okien:** guziki sekcji w ResourceBar (Osiągnięcia/Leksykon/Kadra/Kantor/Załatwianie/
+    Dyplomacja/Taśma/Statystyki/Ustawienia) przełączają (`update(v=>!v)`) — ponowne kliknięcie zamyka okno.
+  - *Testy:* `dyplomacja.test.ts` (+7: unikalne premie/blok, Kuba, cykle/click/all działają, opis przy
+    relacji zerowej, relPct „0,5"). 266 testów (182 game+61 shared+23 studio). Zweryfikowane na żywo: toggle
+    Statystyk (otwórz→zamknij), wersja 0,4,1 w grze, konsola czysta. Dyplomacja/Kadra bramkowane postępem —
+    pokryte testami.
 - ✅ **2026-06-30 — okno powrotu (offline) — 6 poprawek — czeka na test:** (1) czas nieobecności pokazuje
   ZAWSZE minuty (fmtDuration: `if (m)` zamiast `if (m && !d)`). (2) **BUG: brakowało waluty** w raporcie,
   gdy miało się jej o rzędy wielkości więcej niż przybyło — `catchUp` liczył zarobek z różnicy „stan przed/po",
@@ -465,7 +483,7 @@ Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
 ---
 
 ## Stan techniczny
-- Testy: **259 zielonych** (175 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety).
+- Testy: **266 zielonych** (182 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety). Wersja 0.4.1.
 - Studio DLC: osobny workspace `packages/studio` (port 5174). `npm run dev:studio`, `npm run build:studio`.
 - Podpis DLC (5.5D): `npm run sign:dlc -- keygen|sign|verify` (lub `node packages/studio/tools/sign-dlc.mjs`),
   audyt bundla `npm run audit:studio`. Klucz PUBLICZNY wbudowany w `shared/trust.ts`; PRYWATNY offline w

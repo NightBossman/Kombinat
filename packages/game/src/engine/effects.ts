@@ -19,6 +19,8 @@ export interface Modifiers {
   costGenMul: Map<string, Decimal>;
   /** Plaski dodatek do mocy klikania. */
   clickFlatAdd: Decimal;
+  /** Mnoznik mocy klikania (np. premia dyplomatyczna 'click'). */
+  clickMul: Decimal;
 }
 
 export function emptyModifiers(): Modifiers {
@@ -30,6 +32,7 @@ export function emptyModifiers(): Modifiers {
     costGlobalMul: ONE,
     costGenMul: new Map(),
     clickFlatAdd: ZERO,
+    clickMul: ONE,
   };
 }
 
@@ -135,14 +138,23 @@ export function computeModifiers(registry: ContentRegistry, state: GameState): M
   }
   // Kryzys zadluzenia (bust po gierkowskim boomie kredytowym) — dol produkcji do konca pieciolatki.
   if (state.flags['kryzys']) mods.prodGlobalMul = mods.prodGlobalMul.mul(0.4);
-  // Dyplomacja blokow (Faza 4C) — relacja z krajem przesuwa ceny/produkcje/dewizy; bonus rosnie z relacja.
+  // Dyplomacja blokow (Faza 4C) — relacja z krajem przesuwa ceny/produkcje/dewizy/cykle/klikanie; bonus
+  // rosnie z relacja. Kazda PREMIA (scope) to inna dzwignia — w obrebie bloku kraje maja rozne premie.
   for (const [id, c] of registry.diplomacy) {
     const rel = Math.max(0, state.flags['relacja.' + id] ?? 0);
     if (rel <= 0) continue;
     const factor = rel * c.perPoint;
-    if (c.scope === 'cost') mods.costGlobalMul = mods.costGlobalMul.mul(Math.max(0.1, 1 - factor)); // tansze wklady
-    else if (c.scope === 'prod') mods.prodGlobalMul = mods.prodGlobalMul.mul(1 + factor);
-    else if (c.scope === 'dewizy') mulInto(mods.prodResMul, 'dewizy', ONE.add(D(factor)));
+    switch (c.scope) {
+      case 'cost': mods.costGlobalMul = mods.costGlobalMul.mul(Math.max(0.1, 1 - factor)); break; // tansze wklady
+      case 'prod': mods.prodGlobalMul = mods.prodGlobalMul.mul(1 + factor); break;
+      case 'dewizy': mulInto(mods.prodResMul, 'dewizy', ONE.add(D(factor))); break;
+      case 'cykle': mulInto(mods.prodResMul, 'cykle', ONE.add(D(factor))); break;
+      case 'click': mods.clickMul = mods.clickMul.mul(1 + factor); break;
+      case 'all': // po trochu w obie strony (koszty w dol, produkcja w gore)
+        mods.costGlobalMul = mods.costGlobalMul.mul(Math.max(0.1, 1 - factor / 2));
+        mods.prodGlobalMul = mods.prodGlobalMul.mul(1 + factor / 2);
+        break;
+    }
   }
   return mods;
 }

@@ -275,8 +275,11 @@ export interface DiplomacyDef {
   flavor?: string;
   /** Krótki opis korzyści (dla UI). */
   benefit: string;
-  /** Czego dotyczy bonus: 'cost' (tańsze wkłady), 'prod' (produkcja), 'dewizy' (twarda waluta). */
-  scope: 'cost' | 'prod' | 'dewizy';
+  /** Czego dotyczy bonus (PREMIA kraju — w obrębie jednego bloku każdy kraj ma INNĄ): 'cost' (tańsze
+   *  wszystko), 'prod' (produkcja globalna), 'dewizy' (produkcja dewiz), 'cykle' (produkcja cykli),
+   *  'click' (moc klikania), 'all' (po trochu: koszty ↓ i produkcja ↑). Premia może się powtarzać tylko
+   *  między różnymi blokami. */
+  scope: 'cost' | 'prod' | 'dewizy' | 'cykle' | 'click' | 'all';
   /** Siła bonusu na 1 punkt relacji (np. 0.003 → przy relacji 100 ≈ 30%). */
   perPoint: number;
   /** Koszt podniesienia relacji o krok (formula, dewizy) — w silniku rośnie z poziomem relacji. */

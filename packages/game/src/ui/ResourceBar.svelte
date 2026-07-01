@@ -66,35 +66,35 @@
   </div>
   <div class="actions">
     {#if $snapshot}
-      <button onclick={() => achievementsOpen.set(true)}>
+      <button onclick={() => achievementsOpen.update((v) => !v)}>
         Osiągnięcia {$snapshot.achievements.earned}/{$snapshot.achievements.total}
       </button>
-      <button onclick={() => lexiconOpen.set(true)}>
+      <button onclick={() => lexiconOpen.update((v) => !v)}>
         Leksykon {$snapshot.lexicon.unlocked}/{$snapshot.lexicon.total}
       </button>
       {#if $snapshot.characters.length > 0}
-        <button onclick={() => kadraOpen.set(true)}>Kadra</button>
+        <button onclick={() => kadraOpen.update((v) => !v)}>Kadra</button>
       {/if}
       {#if $snapshot.gielda.unlocked}
-        <button onclick={() => gieldaOpen.set(true)}>Kantor</button>
+        <button onclick={() => gieldaOpen.update((v) => !v)}>Kantor</button>
       {/if}
       {#if $snapshot.zalatwianie.unlocked}
-        <button onclick={() => zalatwianieOpen.set(true)}>Załatwianie</button>
+        <button onclick={() => zalatwianieOpen.update((v) => !v)}>Załatwianie</button>
       {/if}
       {#if $snapshot.dyplomacja.unlocked}
-        <button onclick={() => dyplomacjaOpen.set(true)}>Dyplomacja</button>
+        <button onclick={() => dyplomacjaOpen.update((v) => !v)}>Dyplomacja</button>
       {/if}
       {#if $snapshot.tasmaUnlocked}
-        <button onclick={() => minigraOpen.set(true)}>Taśma</button>
+        <button onclick={() => minigraOpen.update((v) => !v)}>Taśma</button>
       {/if}
     {/if}
     {#if $snapshot}
-      <button onclick={() => statystykiOpen.set(true)}>Statystyki</button>
+      <button onclick={() => statystykiOpen.update((v) => !v)}>Statystyki</button>
     {/if}
     <button onclick={manualSave}>Zapisz</button>
     <button onclick={exportSave}>Eksport .k7</button>
     <button onclick={onImportClick}>Import .k7</button>
-    <button onclick={() => settingsOpen.set(true)}>Ustawienia</button>
+    <button onclick={() => settingsOpen.update((v) => !v)}>Ustawienia</button>
     <button class="danger" onclick={() => (confirmReset = true)}>Reset</button>
     <input bind:this={fileInput} type="file" accept=".k7" onchange={onFile} hidden />
   </div>

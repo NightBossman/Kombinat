@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { initEngine, snapshot, toast, minigraOpen, zalatwianieOpen, gieldaOpen, dyplomacjaOpen, manualSave, offlineReport } from './engine/bridge';
+  import { initEngine, snapshot, toast, minigraOpen, zalatwianieOpen, gieldaOpen, dyplomacjaOpen, kadraOpen, manualSave, offlineReport } from './engine/bridge';
   import { startSmooth } from './engine/smooth.svelte';
   import { settings } from './engine/settings.svelte';
   import { ensureAudio, applyVolumes } from './engine/audio';
@@ -68,7 +68,7 @@
   // Dolny pasek walut zostaje OSTRY (bez blur/dim) podczas okien, w których robi się zakupy —
   // minigra (uwaga #4), a także Załatwianie i Kantor: gracz musi widzieć, ile ma kasy.
   $effect(() => {
-    document.body.classList.toggle('keep-bar', $minigraOpen || $zalatwianieOpen || $gieldaOpen || $dyplomacjaOpen);
+    document.body.classList.toggle('keep-bar', $minigraOpen || $zalatwianieOpen || $gieldaOpen || $dyplomacjaOpen || $kadraOpen);
   });
 
   // Aktualizuj głośność, gdy ustawienia się zmienią.
