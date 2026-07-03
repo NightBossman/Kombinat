@@ -64,7 +64,9 @@
     <p class="gen-flavor">{gen.flavor}</p>
   {/if}
   <div class="gen-foot">
-    <span class="gen-cost">{gen.cost} {gen.costUnit}{#if gen.buyCount > 1}<span class="gen-mult"> ×{gen.buyCount}</span>{/if}</span>
+    <span class="gen-cost">
+      {#if gen.buyCount > 1}<span class="gen-mult">×{gen.buyCount}</span>{/if}<span class="gen-cost-val">{gen.cost} {gen.costUnit}</span>
+    </span>
     <span class="gen-rate">+{gen.rate} {gen.outputUnit}/s</span>
   </div>
 </button>

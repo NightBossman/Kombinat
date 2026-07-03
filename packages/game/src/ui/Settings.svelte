@@ -1,9 +1,21 @@
 <script lang="ts">
-  import { settingsOpen } from '../engine/bridge';
+  import { settingsOpen, exportSave, importSave } from '../engine/bridge';
   import { settings, setSetting, type Settings } from '../engine/settings.svelte';
   import { applyVolumes } from '../engine/audio';
 
   const s = $derived(settings());
+
+  // Import zapisu .k7 — ukryty <input type=file>, wyzwalany guzikiem (jak wcześniej w dolnym pasku).
+  let fileInput = $state<HTMLInputElement | null>(null);
+  function onImportClick(): void {
+    fileInput?.click();
+  }
+  async function onFile(e: Event): Promise<void> {
+    const input = e.currentTarget as HTMLInputElement;
+    const f = input.files?.[0];
+    if (f) await importSave(f);
+    input.value = '';
+  }
 
   function toggle(key: keyof Settings, e: Event): void {
     setSetting(key, (e.currentTarget as HTMLInputElement).checked);
@@ -62,7 +74,45 @@
       <label class="set-row"><input type="checkbox" checked={s.autosaveNotify} onchange={(e) => toggle('autosaveNotify', e)} /> Powiadomienie o autozapisie</label>
       <label class="set-row"><input type="checkbox" checked={s.okazje} onchange={(e) => toggle('okazje', e)} /> „Okazje" — losowe bonusy do kliknięcia (złote ciastka)</label>
       <label class="set-row"><input type="checkbox" checked={s.cassette3d} onchange={(e) => toggle('cassette3d', e)} /> Grafika 3D w minigrze „Taśma" (Three.js)</label>
+      {#if s.cassette3d}
+        <label class="set-row"><input type="checkbox" checked={s.tasmaPreload} onchange={(e) => toggle('tasmaPreload', e)} /> Wczytuj grafikę „Taśmy" z góry (płynniejsze pierwsze otwarcie)</label>
+      {/if}
       <label class="set-row"><input type="checkbox" checked={s.noChoiceEventModals} onchange={(e) => toggle('noChoiceEventModals', e)} /> Pokazuj okna depesz bez wyboru (samo „przyjąłem")</label>
+
+      <div class="set-section">Zapis</div>
+      <p class="set-note">Zapis rozgrywki jako plik <b>.k7</b> — do kopii zapasowej albo przeniesienia na inne urządzenie.</p>
+      <div class="set-save">
+        <button class="set-save-btn" onclick={exportSave}>Eksport .k7</button>
+        <button class="set-save-btn" onclick={onImportClick}>Import .k7</button>
+        <input bind:this={fileInput} type="file" accept=".k7" onchange={onFile} hidden />
+      </div>
     </div>
   </div>
 {/if}
+
+<style>
+  .set-note {
+    margin: 6px 2px 8px;
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .set-save {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 2px 4px;
+  }
+  .set-save-btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .set-save-btn:hover {
+    border-color: var(--accent);
+  }
+</style>

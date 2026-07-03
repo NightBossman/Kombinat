@@ -6,6 +6,30 @@ wersjonowanie [SemVer](https://semver.org/lang/pl/). Gra jest **w budowie (pre�
 > Numer wersji żyje w trzech miejscach i musi być spójny: `packages/game/src/version.ts` (`APP_VERSION`),
 > ten plik oraz `package.json`. W grze wersję widać w oknie **Statystyki** (nagłówek + „Historia zmian").
 
+## [0.4.2] — 2026-07-04
+
+### Dodane
+- **Zapis w Ustawieniach:** guziki **Eksport .k7** i **Import .k7** przeniesione z dolnego paska do
+  Ustawień (nowa sekcja „Zapis").
+- **Preload minigry „Taśma":** nowa opcja w Ustawieniach — grafika 3D wczytywana już przy starcie strony,
+  więc pierwsze otwarcie minigry jest płynne (bez „laga", istotne na słabszym sprzęcie).
+
+### Zmienione / naprawione
+- **Eventy nie rozpraszają w minigrach:** przy otwartej dowolnej minigrze (a także innych oknach)
+  powiadomienia o wydarzeniach są wstrzymane i czekają, aż gracz wróci na pulpit. Reguła obejmuje też
+  przyszłe minigry.
+- **Dyplomacja:** bonus z relacji pokazywany z **jednym miejscem po przecinku** (np. „Dewizy +7,3%"),
+  więc widać drobne kroki; usunięto zbędny procent z paska postępu.
+- **Załatwianie:** ryzyko kontroli opada nieco **wolniej**; po dobiciu do **100%** nalot SB kasuje
+  **wszystkie** trwające załatwienia i zeruje ryzyko; naraz może działać **najwyżej 6** bonusów
+  (blokada zakupu kolejnych). Krótszy opis Dygnitarza (mieści się w jednej linii).
+- **Denominacja:** guzik „Tak, denominuj" wygląda tak samo jak „Denominacja"; zysk odznaczeń w oknie
+  potwierdzenia jest wyraźnie **wyróżniony**; podczas pytania nie wyskakują już „okazje" (złote ciastka).
+- **Maszyny:** koszt przy wybranym mnożniku (×10/×100/Max) jest **czytelnie oddzielony** od kwoty
+  (koniec ze sklejonym „…cyklix100").
+- **Stałe nagłówki:** nagłówki „Maszyny" i „Ulepszenia" zostają na miejscu przy przewijaniu (znika tylko
+  pierwsza pozycja), a zaokrąglona ramka modułu jest zawsze widoczna (góra i dół nie są ucinane).
+
 ## [0.4.1] — 2026-07-01
 
 ### Dodane

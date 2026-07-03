@@ -1,7 +1,7 @@
 <script lang="ts">
   import { formatNumber } from '@kombinat/shared';
   import RefreshCcw from '@lucide/svelte/icons/refresh-ccw';
-  import { denominate, openTree } from '../engine/bridge';
+  import { denominate, openTree, denomConfirmOpen } from '../engine/bridge';
   import type { Snapshot } from '../engine/snapshot';
 
   interface Props {
@@ -12,6 +12,11 @@
   const zjazd = $derived(snap.zjazd);
 
   let confirmDenom = $state(false);
+  // Gdy okno potwierdzenia jest otwarte — sygnalizuj to globalnie (blokuje „okazje"/złote ciastko,
+  // by nie wyskakiwało nad pytaniem o Denominację; okno jest wtedy „nakładką zajętości").
+  $effect(() => {
+    denomConfirmOpen.set(confirmDenom);
+  });
   function doDenom(): void {
     confirmDenom = false;
     denominate();
@@ -60,12 +65,12 @@
     <div class="modal">
       <h2>Denominacja?</h2>
       <p>
-        Rozpoczniesz nową pięciolatkę. Dostaniesz <b>+{p.gain} {p.gainUnit}</b>, ale bieżąca
+        Rozpoczniesz nową pięciolatkę. Dostaniesz <span class="denom-gain">+{p.gain} {p.gainUnit}</span>, ale bieżąca
         rozgrywka (maszyny, cykle, ulepszenia, kadra) wróci do zera. Drzewo dziedzictwa,
         osiągnięcia i Leksykon zostają. Na pewno?
       </p>
       <div class="modal-actions">
-        <button onclick={doDenom}>Tak, denominuj</button>
+        <button class="denom-btn" onclick={doDenom}>Tak, denominuj</button>
         <button onclick={() => (confirmDenom = false)}>Anuluj</button>
       </div>
     </div>

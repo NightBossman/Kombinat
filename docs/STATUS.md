@@ -6,7 +6,7 @@
 >
 > Legenda statusu: ✅ zrobione · 🔄 w toku · ⏳ zaplanowane (nieruszane) · 💤 odłożone świadomie.
 >
-> Ostatnia aktualizacja: **2026-06-29**.
+> Ostatnia aktualizacja: **2026-07-04**.
 
 ---
 
@@ -321,6 +321,36 @@ PWA/desktop + Firebase sync. **Odłożona** do czasu rozbudowy ulepszeń (decyzj
 
 ## Rundy szlifu (poza fazami — na życzenie właściciela po testach)
 Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
+- ✅ **2026-07-04 — batch poprawek (wersja 0.4.2) — czeka na test:**
+  - **Zapis → Ustawienia:** guziki „Eksport .k7"/„Import .k7" przeniesione z dolnego paska do Ustawień
+    (nowa sekcja „Zapis"); ResourceBar odchudzony (Zapisz/Ustawienia/Reset).
+  - **Eventy pauzowane przy KAŻDEJ nakładce:** `eventsBusy` zastąpione subskrypcją `overlayOpen` w bridge —
+    depesze czekają, aż gracz wróci na czysty pulpit (dotyczy wszystkich minigier: Taśma/Kantor/Załatwianie/
+    Dyplomacja i przyszłych — wystarczy dodać ich „…Open" do `overlayOpen`). Ogólna reguła „nie rozpraszać".
+  - **Dyplomacja:** `diplomacyEffectText` pokazuje bonus z JEDNYM miejscem po przecinku (np. „Dewizy +7,3%")
+    zamiast pełnego %; USUNIĘTE `RelationView.relPct` i procent z paska postępu (błędne umiejscowienie z 0.4.1).
+  - **Załatwianie:** `RISK_DECAY_PER_SEC` 1,5→1,0 (wolniej opada); przy ryzyku ≥100% `bribe()` robi nalot SB —
+    `wipeBribeBuffs()` kasuje WSZYSTKIE trwające załatwienia i zeruje ryzyko; limit `ZAL_MAX_ACTIVE=6`
+    aktywnych (blokada zakupu, `activeBribeCount()`). `activeBuffs` mają teraz `src:'bribe'|'okazja'`
+    (ciastka nietykalne). ZalatwianieView: `activeBribes`/`maxBribes`; UI wyłącza guziki na limicie + odczyt.
+    Skrócony opis Dygnitarza (1 linia).
+  - **Denominacja:** „Tak, denominuj" = klasa `denom-btn` (wygląda jak „Denominacja"); zysk odznaczeń w
+    oknie w `.denom-gain` (złoto, wytłuszczone); nowy store `denomConfirmOpen` w `overlayOpen` → podczas
+    pytania nie ma złotych ciastek (i eventów).
+  - **Koszt maszyn:** mnożnik jako „pastylka" PRZED kwotą (`.gen-mult` pill + `.gen-cost-val`, gap 7px) —
+    koniec ze sklejonym „…cyklix100".
+  - **Stałe nagłówki:** `GeneratorList`/`UpgradesPanel` mają teraz `.gen-scroll`/`.up-scroll` (obszar
+    przewijany) — nagłówek (i filtr) siedzą poza nim; na desktopie kolumny `col-mid`/`col-right`
+    `align-self:stretch`+`overflow:hidden`, moduł kapuje na 100%, scroll oddany liście. Ramka z zaoblonymi
+    rogami zawsze widoczna; przewija się tylko lista. Zweryfikowane na żywo: nagłówek nieruchomy, 1. karta
+    wjeżdża pod niego.
+  - **Preload Taśmy:** nowa opcja `tasmaPreload` (dom. true, gdy 3D wł.) — `Minigra.svelte` rozgrzewa chunk
+    `Cassette3D` w `requestIdleCallback` przy starcie, więc 1. otwarcie minigry jest płynne.
+  - *Testy:* nowy `zalatwianie.test.ts` (+2: limit 6 + nalot 100%); `dyplomacja.test.ts` (bonus z 1 miejscem
+    po przecinku zamiast relPct); `phase4a` (decay 1,0/s). **268 testów** (184 game + 61 shared + 23 studio),
+    typecheck+build czyste. Zweryfikowane na żywo: Ustawienia (Zapis + preload), pastylka kosztu ×100,
+    stały nagłówek przy scrollu, brak błędów w konsoli. Denominacja/Dyplomacja/Załatwianie (późna gra) —
+    pokryte testami.
 - ✅ **2026-07-01 — Dyplomacja + Kadra + zamykanie okien (wersja 0.4.1) — czeka na test:**
   - **Unikalne premie w bloku:** rozszerzone `DiplomacyDef.scope` (dodane `cykle`/`click`/`all`; walidator
     pack.ts nie sprawdzał enuma → Studio zgodne bez zmian). Silnik: nowa dźwignia `clickMul` (+clickPower),
@@ -483,7 +513,7 @@ Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
 ---
 
 ## Stan techniczny
-- Testy: **266 zielonych** (182 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety). Wersja 0.4.1.
+- Testy: **268 zielonych** (184 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety). Wersja 0.4.2.
 - Studio DLC: osobny workspace `packages/studio` (port 5174). `npm run dev:studio`, `npm run build:studio`.
 - Podpis DLC (5.5D): `npm run sign:dlc -- keygen|sign|verify` (lub `node packages/studio/tools/sign-dlc.mjs`),
   audyt bundla `npm run audit:studio`. Klucz PUBLICZNY wbudowany w `shared/trust.ts`; PRYWATNY offline w

@@ -131,8 +131,8 @@ describe('Faza 4A — załatwianie / łapówki', () => {
   it('ryzyko kontroli opada w czasie', () => {
     const e = eng();
     e.state.flags['ryzyko'] = 50;
-    e.tick(10); // 10 s × 1,5 = −15
-    expect(e.ryzyko()).toBeCloseTo(35, 1);
+    e.tick(10); // 10 s × 1,0/s = −10 (ryzyko opada teraz nieco wolniej)
+    expect(e.ryzyko()).toBeCloseTo(40, 1);
   });
 
   it('migawka niesie panel załatwiania (cele + ryzyko + zaopatrzenie) po odblokowaniu', () => {

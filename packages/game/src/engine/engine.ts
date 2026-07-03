@@ -89,8 +89,9 @@ const TASMA_GAP_MS = 60000; // gry w Tasme „za jednym zamachem"
 
 // Załatwianie/łapówki (Faza 4A): ryzyko kontroli 0..100, opada w czasie; powyżej progu rośnie
 // szansa, że łapówka ściągnie kontrolę (kara + reset). Decydent ryzyko-nagroda, nie darmowy guzik.
-const RISK_DECAY_PER_SEC = 1.5; // ile ryzyka schodzi na sekundę (ze 100 do 0 ~ 67 s)
+const RISK_DECAY_PER_SEC = 1.0; // ile ryzyka schodzi na sekundę (ze 100 do 0 ~ 100 s — nieco wolniej niż wcześniej)
 const RISK_KONTROLA_THRESHOLD = 40; // poniżej tego smarowanie bezpieczne
+const ZAL_MAX_ACTIVE = 6; // limit jednocześnie AKTYWNYCH bonusów z Załatwiania (blokada zakupu ponad)
 // Zaopatrzenie (Faza 4A → przerobione): RZADKA, mocna promocja „rzut towaru". Trwa SUPPLY_DEAL_MS,
 // a NASTĘPNA przychodzi dopiero SUPPLY_GAP_MS po zakończeniu poprzedniej (odliczanie od KOŃCA, nie od
 // początku). Każda promocja losuje jeden z trzech rabatów (równe szanse, NIGDY dwa takie same pod rząd).
@@ -159,7 +160,9 @@ export class Engine {
   // Aktywne tymczasowe bonusy (runtime, wygasają): z „okazji" (uwaga #21) oraz z łapówek (Faza 4A).
   // Zakresy: 'prod' (cała produkcja), 'click' (klikanie), 'cost' (koszty, mul<1 = taniej),
   // 'dewizy' (produkcja dewiz).
-  private activeBuffs: { id: number; kind: 'prod' | 'click' | 'cost' | 'dewizy'; mult: number; until: number; label: string }[] = [];
+  // `src` rozróżnia POCHODZENIE bonusu: 'bribe' (z Załatwiania — liczony do limitu i kasowany przy
+  // ryzyku 100%) vs 'okazja' (złote ciastko — nietykalny przez kontrolę SB).
+  private activeBuffs: { id: number; kind: 'prod' | 'click' | 'cost' | 'dewizy'; mult: number; until: number; label: string; src: 'bribe' | 'okazja' }[] = [];
   // Licznik nadający KAŻDEMU bonusowi unikalne id — UI kluczuje po nim listę bonusów. Bez tego dwa bonusy
   // o tej samej nazwie (np. dwa razy „Kolacja z dygnitarzem") dawały duplikat klucza i ZAMRAŻAŁY render.
   private buffSeq = 0;
@@ -520,11 +523,11 @@ export class Engine {
     const now = Date.now();
     const roll = Math.random();
     if (roll < 0.35) {
-      this.activeBuffs.push({ id: ++this.buffSeq, kind: 'prod', mult: 7, until: now + 60000, label: 'Rzut towaru ×7' });
+      this.activeBuffs.push({ id: ++this.buffSeq, kind: 'prod', mult: 7, until: now + 60000, label: 'Rzut towaru ×7', src: 'okazja' });
       return { kind: 'rzut', title: 'Rzut towaru!', detail: 'Cała produkcja ×7 przez minutę' };
     }
     if (roll < 0.65) {
-      this.activeBuffs.push({ id: ++this.buffSeq, kind: 'click', mult: 777, until: now + 13000, label: 'Czyn społeczny ×777' });
+      this.activeBuffs.push({ id: ++this.buffSeq, kind: 'click', mult: 777, until: now + 13000, label: 'Czyn społeczny ×777', src: 'okazja' });
       return { kind: 'czyn', title: 'Czyn społeczny!', detail: 'Klikanie ×777 przez 13 s' };
     }
     if (roll < 0.9) {
@@ -536,7 +539,7 @@ export class Engine {
       this.state.stats.runProduced['cykle'] = (this.state.stats.runProduced['cykle'] ?? ZERO).add(reward);
       return { kind: 'spod_lady', title: 'Spod lady!', detail: '+' + formatNumber(reward) + ' cykli od ręki' };
     }
-    this.activeBuffs.push({ id: ++this.buffSeq, kind: 'prod', mult: 0.5, until: now + 30000, label: 'Kontrola ×0,5' });
+    this.activeBuffs.push({ id: ++this.buffSeq, kind: 'prod', mult: 0.5, until: now + 30000, label: 'Kontrola ×0,5', src: 'okazja' });
     return { kind: 'kontrola', title: 'Kontrola skarbowa…', detail: 'Produkcja ×0,5 przez 30 s' };
   }
 
@@ -565,10 +568,28 @@ export class Engine {
     return evalNumber(b.cost, this.queryCtx());
   }
 
+  /** Ile bonusów z Załatwiania jest AKTYWNYCH (niewygasłych) teraz — do limitu i do UI. */
+  activeBribeCount(now = Date.now()): number {
+    let n = 0;
+    for (const b of this.activeBuffs) if (b.src === 'bribe' && b.until > now) n++;
+    return n;
+  }
+
+  /** Kasuje WSZYSTKIE trwające bonusy z Załatwiania (kara za ryzyko 100%). Zwraca, ile przepadło. */
+  private wipeBribeBuffs(): number {
+    const before = this.activeBuffs.length;
+    this.activeBuffs = this.activeBuffs.filter((b) => b.src !== 'bribe');
+    return before - this.activeBuffs.length;
+  }
+
   /** Daj łapówkę: płać przysługą, dostań czasowy bonus, dolicz ryzyko; przy wysokim — kontrola SB. */
   bribe(id: string): { ok: boolean; kontrola: boolean; title?: string; detail?: string } {
     const b = this.registry.bribes.get(id);
     if (!b || !this.bribeAvailable(id)) return { ok: false, kontrola: false };
+    // Limit jednoczesnych załatwień (prośba właściciela) — ponad ZAL_MAX_ACTIVE nie kupujemy (UI też blokuje).
+    if (this.activeBribeCount() >= ZAL_MAX_ACTIVE) {
+      return { ok: false, kontrola: false, title: 'Limit załatwień', detail: `Naraz działa najwyżej ${ZAL_MAX_ACTIVE} — poczekaj, aż któreś wygaśnie.` };
+    }
     const res = b.costResource ?? 'dewizy';
     const cost = this.bribeCost(id);
     const have = this.state.resources[res] ?? ZERO;
@@ -576,13 +597,23 @@ export class Engine {
 
     this.state.resources[res] = have.sub(cost);
     const now = Date.now();
-    this.activeBuffs.push({ id: ++this.buffSeq, kind: b.scope, mult: b.mul, until: now + b.durationSec * 1000, label: b.name });
+    this.activeBuffs.push({ id: ++this.buffSeq, kind: b.scope, mult: b.mul, until: now + b.durationSec * 1000, label: b.name, src: 'bribe' });
     this.state.flags['ryzyko'] = Math.min(100, this.ryzyko() + b.risk);
     this.state.stats.counters['lapowki'] = (this.state.stats.counters['lapowki'] ?? 0) + 1;
+
+    const risk = this.ryzyko();
+    // TWARDA kara: ryzyko dobiło do 100% → nalot SB kasuje WSZYSTKIE trwające bonusy z Załatwiania
+    // (także ten świeżo kupiony). Ryzyko wraca do zera. „Za grube smarowanie" = wszystko przepada.
+    if (risk >= 100) {
+      const wiped = this.wipeBribeBuffs();
+      this.state.flags['ryzyko'] = 0;
+      this.recomputeModifiers();
+      if (this.registry.events.has('rdzen.ev_kontrola_lapowka')) this.eventQueue.push('rdzen.ev_kontrola_lapowka');
+      return { ok: true, kontrola: true, title: 'Nalot SB!', detail: `Ryzyko 100% — przepadły wszystkie załatwione sprawy (${wiped}).` };
+    }
     this.recomputeModifiers();
 
     // Ryzyko-nagroda: powyżej progu rośnie szansa, że SB zwęszy. Kara aplikowana przez zdarzenie SB.
-    const risk = this.ryzyko();
     if (risk > RISK_KONTROLA_THRESHOLD && Math.random() < (risk - RISK_KONTROLA_THRESHOLD) / 120) {
       this.state.flags['ryzyko'] = 20; // po kontroli ryzyko spada
       if (this.registry.events.has('rdzen.ev_kontrola_lapowka')) {
@@ -764,18 +795,18 @@ export class Engine {
   private diplomacyEffectText(scope: string, factor: number): string {
     const zero = factor <= 0;
     const note = ' (relacja zerowa)';
-    const pct = Math.round(factor * 100);
+    // Procent z JEDNYM miejscem po przecinku (przecinek PL) — bez tego pojedyncze zacieśnienie <1%
+    // wyglądało, jakby nic nie dawało (skok tylko o pełny %). Teraz widać każdy krok, np. „Dewizy +7,3%".
+    const pct1 = (x: number): string => (x * 100).toFixed(1).replace('.', ',');
     switch (scope) {
-      case 'cost': return zero ? `Koszty ↓${note}` : `Koszty −${pct}%`;
-      case 'prod': return zero ? `Produkcja ↑${note}` : `Produkcja +${pct}%`;
-      case 'dewizy': return zero ? `Dewizy ↑${note}` : `Dewizy +${pct}%`;
-      case 'cykle': return zero ? `Cykle ↑${note}` : `Cykle +${pct}%`;
-      case 'click': return zero ? `Klikanie ↑${note}` : `Klikanie +${pct}%`;
-      case 'all': {
-        const p2 = Math.round((factor / 2) * 100);
-        return zero ? `Koszty ↓ i produkcja ↑${note}` : `Koszty −${p2}% i produkcja +${p2}%`;
-      }
-      default: return zero ? `Korzyść${note}` : `Bonus +${pct}%`;
+      case 'cost': return zero ? `Koszty ↓${note}` : `Koszty −${pct1(factor)}%`;
+      case 'prod': return zero ? `Produkcja ↑${note}` : `Produkcja +${pct1(factor)}%`;
+      case 'dewizy': return zero ? `Dewizy ↑${note}` : `Dewizy +${pct1(factor)}%`;
+      case 'cykle': return zero ? `Cykle ↑${note}` : `Cykle +${pct1(factor)}%`;
+      case 'click': return zero ? `Klikanie ↑${note}` : `Klikanie +${pct1(factor)}%`;
+      case 'all':
+        return zero ? `Koszty ↓ i produkcja ↑${note}` : `Koszty −${pct1(factor / 2)}% i produkcja +${pct1(factor / 2)}%`;
+      default: return zero ? `Korzyść${note}` : `Bonus +${pct1(factor)}%`;
     }
   }
 
@@ -1368,6 +1399,8 @@ export class Engine {
     const zalatwianie: ZalatwianieView = {
       unlocked: zalUnlocked,
       ryzyko: Math.round(this.ryzyko()),
+      activeBribes: this.activeBribeCount(),
+      maxBribes: ZAL_MAX_ACTIVE,
       bribes,
       supplies,
       supplyDeal: {
@@ -1424,8 +1457,6 @@ export class Engine {
           benefit: d.benefit,
           relation: Math.round(rel),
           max,
-          // Postęp z jednym miejscem po przecinku — by kroki <1% też były WIDOCZNE (przecinek PL).
-          relPct: ((rel / max) * 100).toFixed(1).replace('.', ','),
           effectText: this.diplomacyEffectText(d.scope, rel * d.perPoint),
           cost: formatNumber(cost),
           costUnit: pluralizePL(cost.toNumber(), dewForms2),
