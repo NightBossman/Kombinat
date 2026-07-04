@@ -42,6 +42,12 @@ export interface GameState {
   characters: Record<string, boolean>;
   /** Wybrana doktryna ze Zjazdu PZPR na TĘ pięciolatkę (Faza 4B). '' = brak. Reset przy Denominacji. */
   doctrine: string;
+  /** Faza „limbo" MIĘDZY pięciolatkami (0.4.3): '' = normalna gra; 'ceremony' → 'tree' → 'zjazd' →
+   *  'splash'. Gdy ustawiona, GRA JEST WSTRZYMANA (nic nie produkuje) — stara rozgrywka już się skończyła,
+   *  nowa jeszcze się nie zaczęła. TRWAŁE w save → po zamknięciu gry wracamy do tego samego etapu. */
+  interRun: string;
+  /** Ile odznaczeń dała Denominacja, która otworzyła to limbo — do ekranu ceremonii (odporne na reload). */
+  interRunGain: Decimal;
   flags: Record<string, number>;
   clickPower: Decimal;
   stats: GameStats;
@@ -61,6 +67,8 @@ export interface SaveData {
   achievements: Record<string, boolean>;
   characters: Record<string, boolean>;
   doctrine?: string;
+  interRun?: string;
+  interRunGain?: string;
   flags: Record<string, number>;
   clickPower: string;
   stats: {
@@ -101,6 +109,8 @@ export function createInitialState(registry: ContentRegistry): GameState {
     achievements: {},
     characters: {},
     doctrine: '',
+    interRun: '',
+    interRunGain: ZERO,
     flags: {},
     clickPower: ONE,
     stats: {
@@ -137,6 +147,8 @@ export function serializeState(s: GameState): SaveData {
     achievements: { ...s.achievements },
     characters: { ...s.characters },
     doctrine: s.doctrine,
+    interRun: s.interRun,
+    interRunGain: s.interRunGain.toString(),
     flags: { ...s.flags },
     clickPower: s.clickPower.toString(),
     stats: {
@@ -185,6 +197,8 @@ export function deserializeState(data: SaveData, registry: ContentRegistry): Gam
   base.achievements = { ...(data.achievements ?? {}) };
   base.characters = { ...(data.characters ?? {}) };
   base.doctrine = data.doctrine ?? '';
+  base.interRun = data.interRun ?? '';
+  base.interRunGain = data.interRunGain !== undefined ? new Decimal(data.interRunGain) : ZERO;
   base.flags = { ...(data.flags ?? {}) };
   if (data.clickPower !== undefined) base.clickPower = new Decimal(data.clickPower);
   if (data.stats) {

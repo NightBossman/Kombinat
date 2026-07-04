@@ -13,6 +13,10 @@ function numStr(n: number): string {
 }
 
 const COUNT = 14; // długość ogona każdego konaru
+// Rząd (a zarazem LICZBA POZIOMÓW) pierwszego węzła ogona. Ręczne rzędy to 1–9, a rząd 10 to FINAŁ
+// każdego konaru (t_order / t_finrd / t_finrynek) — ogon startuje więc od rzędu 11. Reguła właściciela:
+// „numer rzędu = liczba poziomów ulepszenia" (poziomy rosną w głąb, koszt wejścia monotoniczny).
+const TAIL_START_ROW = 11;
 
 interface TailCfg {
   branch: string;
@@ -34,7 +38,7 @@ const TAILS: TailCfg[] = [
   },
   {
     branch: 'rd',
-    from: 'rdzen.t_dolina',
+    from: 'rdzen.t_fin_rd', // ogon R&D startuje PO finale konaru „Krzemowy szczyt"
     tag: 'rd',
     desc: 'Rodzima myśl techniczna pcha się w przyszłość — poziom po poziomie.',
     names: ['Instytut II stopnia', 'Politechnika', 'Polska Akademia Nauk', 'Program kosmiczny', 'Superkomputer', 'Sztuczny rozum', 'Krzemowa dolina nad Wisłą', 'Patent stulecia', 'Przełom technologiczny', 'Myśl nieujarzmiona', 'Technologia jutra', 'Osobliwość', 'Wieczny postęp', 'Nauka bez granic'],
@@ -45,7 +49,7 @@ const TAILS: TailCfg[] = [
   },
   {
     branch: 'rynek',
-    from: 'rdzen.t_offshore',
+    from: 'rdzen.t_fin_rynek', // ogon Rynku startuje PO finale konaru „Wielka prywatyzacja"
     tag: 'rynek',
     desc: 'Druga gospodarka ma kolejne dna. Kapitał pracuje sam na siebie.',
     names: ['Spółdzielnia', 'Joint venture', 'Koncern', 'Imperium handlowe', 'Bank prywatny', 'Parkiet giełdowy', 'Fundusz inwestycyjny', 'Kapitał obrotowy', 'Wielki kapitał', 'Magnat', 'Oligarcha', 'Niewidzialna ręka rynku', 'Wieczny zysk', 'Fortuna bez dna'],
@@ -59,17 +63,20 @@ const TAILS: TailCfg[] = [
 function buildTail(cfg: TailCfg): TreeNodeDef[] {
   const out: TreeNodeDef[] = [];
   for (let t = 0; t < COUNT; t++) {
+    const row = TAIL_START_ROW + t; // rząd 11, 12, … (a zarazem liczba poziomów węzła)
     const prev = t === 0 ? cfg.from : `rdzen.gt_${cfg.tag}_${t - 1}`;
     out.push({
       id: `rdzen.gt_${cfg.tag}_${t}`,
       name: cfg.names[t]!,
       description: cfg.desc,
-      cost: numStr(Math.round(120 * 1.7 ** t)),
+      // Koszt WEJŚCIA rośnie monotonicznie i zawsze jest DROŻSZY niż finał rzędu 10 (~10 000) — koniec
+      // z „dziurą", gdzie ogon startował taniej (120) niż wcześniejsze węzły. Silnik dokłada ×2/poziom.
+      cost: numStr(Math.round(15000 * 1.6 ** t)),
       requires: [prev],
       branch: cfg.branch,
       fogged: true, // odsłania się dopiero gdy poprzednik ma ≥1 poziom (czysty, „nieskończony" ogon)
-      levels: Math.min(3 + Math.floor(t / 2), 12), // poziomy rosną w głąb
-      kind: t % 5 === 4 ? 'keystone' : 'multiplier',
+      levels: row, // numer rzędu = liczba poziomów (poziomy rosną w głąb)
+      kind: row % 5 === 0 ? 'keystone' : 'multiplier',
       effects: cfg.effect(t),
     });
   }

@@ -313,6 +313,15 @@ export interface GieldaView {
   history: number[];
 }
 
+/** Faza „limbo" MIĘDZY pięciolatkami (0.4.3). `phase`: '' = normalna gra; 'ceremony' → 'tree' → 'zjazd'
+ *  → 'splash'. Gdy niepusta, gra jest wstrzymana, a UI pokazuje odpowiedni etap (odporny na reload). */
+export interface InterRunView {
+  phase: string;
+  /** Ile odznaczeń dała Denominacja otwierająca to limbo (sformatowane) + odmieniona jednostka. */
+  gain: string;
+  gainUnit: string;
+}
+
 export interface Snapshot {
   resources: ResourceView[];
   clickResource: string;
@@ -334,6 +343,8 @@ export interface Snapshot {
   zalatwianie: ZalatwianieView;
   zjazd: ZjazdView;
   dyplomacja: DyplomacjaView;
+  /** Faza „limbo" między pięciolatkami (steruje ceremonią/drzewem/Zjazdem/planszą; '' = normalna gra). */
+  interRun: InterRunView;
   /** Czy minigra „Taśma" odblokowana (uwaga #6 — przez wykupienie ulepszenia). */
   tasmaUnlocked: boolean;
   /** Czy „okazje" (złote ciastka, uwaga #21) mają się pojawiać. */

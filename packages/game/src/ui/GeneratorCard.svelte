@@ -2,7 +2,6 @@
   import BadgeCheck from '@lucide/svelte/icons/badge-check';
   import Puzzle from '@lucide/svelte/icons/puzzle';
   import { buy } from '../engine/bridge';
-  import { settings } from '../engine/settings.svelte';
   import { genIcon } from './icons';
   import type { GeneratorView } from '../engine/snapshot';
 
@@ -12,33 +11,11 @@
   let { gen }: Props = $props();
 
   const Icon = $derived(genIcon(gen.id));
-
-  // Poświata przy zakupie (juice). RESTARTUJEMY animację na każdy zakup (off→on przez rAF),
-  // dzięki czemu szybkie klikanie daje krótki, czysty błysk za każdym razem (uwaga #6).
-  let pulsing = $state(false);
-  let prev = 0;
-  let inited = false;
-  let raf = 0;
-  $effect(() => {
-    const n = gen.ownedNum;
-    if (!inited) {
-      inited = true;
-      prev = n;
-      return;
-    }
-    if (n > prev && settings().animations) {
-      pulsing = false;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => (pulsing = true));
-    }
-    prev = n;
-  });
 </script>
 
 <button
   class="gen-card"
   class:affordable={gen.affordable}
-  class:pulse-buy={pulsing}
   class:dlc={!!gen.accent}
   disabled={!gen.affordable}
   onclick={() => buy(gen.id)}

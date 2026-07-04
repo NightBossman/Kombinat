@@ -25,12 +25,31 @@ describe('U3 — głębokie ogony drzewa Dziedzictwa', () => {
     expect(v.issues.filter((i) => i.level === 'error'), JSON.stringify(v.issues.slice(0, 5))).toHaveLength(0);
   });
 
-  it('liczba poziomów rośnie w głąb ogona', () => {
+  it('poziomy = numer rzędu (ogon startuje od rzędu 11), rośnie o 1 na węzeł', () => {
     const tree = buildGeneratedTree();
-    const a0 = tree.find((n) => n.id === 'rdzen.gt_aparat_0')!;
-    const a13 = tree.find((n) => n.id === 'rdzen.gt_aparat_13')!;
-    expect(a0.levels).toBe(3);
-    expect(a13.levels!).toBeGreaterThan(a0.levels!);
+    const aparat = tree.filter((n) => n.id.startsWith('rdzen.gt_aparat_'));
+    // Rzędy 1–9 ręczne + finał rzędu 10 → ogon to rzędy 11..24 (reguła: numer rzędu = liczba poziomów).
+    aparat.forEach((n, i) => expect(n.levels).toBe(11 + i));
+    expect(tree.find((n) => n.id === 'rdzen.gt_aparat_0')!.levels).toBe(11);
+    expect(tree.find((n) => n.id === 'rdzen.gt_aparat_13')!.levels).toBe(24);
+  });
+
+  it('koszty wejścia ogona rosną monotonicznie i są droższe niż finał rzędu 10', () => {
+    const tree = buildGeneratedTree();
+    const aparat = tree.filter((n) => n.id.startsWith('rdzen.gt_aparat_'));
+    const costs = aparat.map((n) => new Decimal(n.cost as string).toNumber());
+    for (let i = 1; i < costs.length; i++) expect(costs[i]!).toBeGreaterThan(costs[i - 1]!);
+    expect(costs[0]!).toBeGreaterThan(10000); // finał (t_*) kosztuje 10000 — ogon startuje wyżej, bez „dziury"
+  });
+
+  it('konary są SYMETRYCZNE — każdy ma tyle samo węzłów (finał R&D i Rynku dorobiony)', () => {
+    const byBranch = new Map<string, number>();
+    for (const n of basePack.treeNodes!) byBranch.set(n.branch ?? '', (byBranch.get(n.branch ?? '') ?? 0) + 1);
+    const counts = [...byBranch.values()];
+    expect(new Set(counts).size, `liczności konarów: ${[...byBranch.entries()].map(([b, c]) => `${b}:${c}`).join(', ')}`).toBe(1);
+    // finały R&D i Rynku istnieją (symetria z „Order" Aparatu)
+    expect(basePack.treeNodes!.some((n) => n.id === 'rdzen.t_fin_rd')).toBe(true);
+    expect(basePack.treeNodes!.some((n) => n.id === 'rdzen.t_fin_rynek')).toBe(true);
   });
 
   it('ogon jest zamglony — odsłania się dopiero po wykupieniu zwornika', () => {

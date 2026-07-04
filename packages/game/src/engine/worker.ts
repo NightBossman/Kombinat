@@ -176,6 +176,12 @@ async function handle(msg: WorkerIn): Promise<void> {
       }
       break;
     }
+    case 'setInterRun':
+      if (engine) {
+        engine.setInterRun(msg.phase);
+        post({ type: 'snapshot', snapshot: engine.snapshot() });
+      }
+      break;
     case 'requestSave': {
       if (!engine) break;
       const bytes = await encodeSave(engine.serialize());

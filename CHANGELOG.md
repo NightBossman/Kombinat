@@ -6,6 +6,29 @@ wersjonowanie [SemVer](https://semver.org/lang/pl/). Gra jest **w budowie (pre�
 > Numer wersji żyje w trzech miejscach i musi być spójny: `packages/game/src/version.ts` (`APP_VERSION`),
 > ten plik oraz `package.json`. W grze wersję widać w oknie **Statystyki** (nagłówek + „Historia zmian").
 
+## [0.4.3] — 2026-07-04
+
+### Dodane
+- **„Limbo" między pięciolatkami:** po Denominacji stara rozgrywka jest **zakończona**, a nowa **STOI**
+  (nic nie produkuje), dopóki gracz nie przejdzie: ceremonia → **Dziedzictwo** → (Zjazd PZPR) → plansza
+  „Nowa pięciolatka". Etap jest **trwały w zapisie** — po zamknięciu i ponownym otwarciu gry wracamy do
+  DOKŁADNIE tego samego kroku (a nie do już rozpoczętej gry bez możliwości zakupu ulepszeń/doktryny).
+  Formalny start nowej rozgrywki = **zniknięcie planszy** „Nowa pięciolatka" (trwa teraz 2 s).
+- **Symetryczne finały konarów:** R&D („Krzemowy szczyt") i Rynek („Wielka prywatyzacja") dostały własne
+  zwieńczenia rzędu 10 — konary są równej długości jak Aparat z „Orderem".
+
+### Zmienione / naprawione
+- **Wybór doktryny — dwuetapowy:** klikasz kartę (podświetlenie), potem **zatwierdzasz**; dochodzi guzik
+  **„◀ Wróć do ulepszeń"**. Guziki „dalej" mają czytelniejsze, szczere nazwy i są **wyśrodkowane**
+  (koniec z mylącym „Rozpocznij nową pięciolatkę", które brzmiało jak start gry).
+- **Drzewo Dziedzictwa — porządek poziomów i kosztów:** **numer rzędu = liczba poziomów** węzła
+  (naprawione „pomieszane" poziomy, dziury i złe koszty od 7. rzędu); koszty wejścia w głąb rosną
+  monotonicznie. **Nagłówki konarów** (Aparat/R&D/Rynek) **nie zjeżdżają** przy przewijaniu (przypięte).
+- **Kantor** odblokowuje się dopiero po **kupieniu ZX Spectruma** (a nie przez all-time produkcję dewiz,
+  która przeżywała Denominację i wyskakiwała od startu każdej kolejnej pięciolatki).
+- **Regresje z 0.4.2:** usunięty migający **poziomy pasek/„błysk"** przy szybkim kupowaniu maszyn;
+  znacznik mnożnika (×10/×100) **nie wydłuża już kart** (koniec z „podskakiwaniem" przy zmianie mnożnika).
+
 ## [0.4.2] — 2026-07-04
 
 ### Dodane

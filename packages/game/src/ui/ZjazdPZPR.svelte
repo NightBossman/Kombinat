@@ -3,9 +3,13 @@
   // Każda to trwały kompromis; „Kredyty zachodnie" niosą gierkowski boom-bust (opóźniony kryzys).
   import Landmark from '@lucide/svelte/icons/landmark';
   import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
-  import { zjazdOpen, snapshot, chooseDoctrine } from '../engine/bridge';
+  import { zjazdOpen, snapshot, chooseDoctrine, backToTree } from '../engine/bridge';
 
   const doctrines = $derived($snapshot?.zjazd?.doctrines ?? []);
+  // Wybór doktryny jest DWUETAPOWY: najpierw klikasz kartę (tylko podświetlenie), potem zatwierdzasz.
+  // Dzięki temu można się rozmyślić bez natychmiastowego startu (to nie jest jeszcze koniec limbo).
+  let selected = $state<string | null>(null);
+  const selectedDoc = $derived(doctrines.find((d) => d.id === selected && d.available) ?? null);
 </script>
 
 {#if $zjazdOpen}
@@ -15,13 +19,20 @@
         <h2 class="win-head"><span class="win-head-icon"><Landmark size={18} strokeWidth={1.8} /></span>Zjazd PZPR</h2>
       </div>
       <p class="tree-hint">
-        Towarzysze, czas wytyczyć linię na nową pięciolatkę. Wybrana <b>doktryna</b> obowiązuje przez
-        całą rozgrywkę — aż do następnej Denominacji.
+        Towarzysze, czas wytyczyć linię na nową pięciolatkę. Kliknij <b>doktrynę</b>, by ją wybrać, a
+        potem zatwierdź. Obowiązuje przez całą rozgrywkę — aż do następnej Denominacji. To wciąż nie start:
+        możesz <b>wrócić</b> do dziedzictwa albo zmienić wybór.
       </p>
 
       <div class="zjazd-list">
         {#each doctrines as d (d.id)}
-          <button class="zjazd-card" disabled={!d.available} onclick={() => chooseDoctrine(d.id)} title={d.flavor ?? ''}>
+          <button
+            class="zjazd-card"
+            class:selected={selected === d.id}
+            disabled={!d.available}
+            onclick={() => (selected = d.id)}
+            title={d.flavor ?? ''}
+          >
             <span class="zjazd-card-head">
               <span class="zjazd-card-name">{d.name}</span>
               {#if d.hasDebt}
@@ -35,7 +46,10 @@
       </div>
 
       <div class="zjazd-foot">
-        <button class="zjazd-skip" onclick={() => chooseDoctrine('')}>Bez doktryny — ruszaj ▶</button>
+        <button class="zjazd-back" onclick={backToTree}>◀ Wróć do ulepszeń</button>
+        <button class="zjazd-confirm" onclick={() => chooseDoctrine(selectedDoc?.id ?? '')}>
+          {#if selectedDoc}Zatwierdź: {selectedDoc.name} ▶{:else}Rusz bez doktryny ▶{/if}
+        </button>
       </div>
     </div>
   </div>
@@ -88,6 +102,12 @@
   .zjazd-card:active:not(:disabled) {
     transform: scale(0.99);
   }
+  .zjazd-card.selected {
+    border-color: var(--accent-strong);
+    border-left-color: var(--accent-strong);
+    box-shadow: 0 0 0 1px var(--accent-strong), 0 0 12px rgba(95, 168, 106, 0.3);
+    background: color-mix(in srgb, var(--accent) 12%, var(--panel-2));
+  }
   .zjazd-card:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -126,21 +146,37 @@
   }
   .zjazd-foot {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center; /* oba guziki wyśrodkowane (życzenie właściciela) */
+    gap: 10px;
+    flex-wrap: wrap;
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--border);
   }
-  .zjazd-skip {
-    padding: 8px 14px;
+  .zjazd-back {
+    padding: 9px 14px;
     background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text);
     font-family: var(--mono);
+    font-weight: 700;
     cursor: pointer;
   }
-  .zjazd-skip:hover {
-    filter: brightness(1.1);
+  .zjazd-back:hover {
+    border-color: var(--accent);
+  }
+  .zjazd-confirm {
+    padding: 9px 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: 4px;
+    color: var(--bg);
+    font-family: var(--mono);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .zjazd-confirm:hover {
+    background: var(--accent-strong);
   }
 </style>

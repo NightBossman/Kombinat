@@ -10,7 +10,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: APP_VERSION, // 0.4.2
+    version: APP_VERSION, // 0.4.3
+    date: '2026-07-04',
+    items: [
+      'Po Denominacji gra STOI, dopóki nie przejdziesz przez ceremonię, dziedzictwo i wybór doktryny — nowa pięciolatka rusza dopiero po planszy „Nowa pięciolatka".',
+      'Ten „przystanek" między pięciolatkami przeżywa zamknięcie gry: po powrocie wracasz do tego samego etapu, a nie do rozpoczętej rozgrywki.',
+      'Wybór doktryny jest teraz dwuetapowy (klikasz, potem zatwierdzasz), z guzikiem powrotu do dziedzictwa. Czytelniejsze i wyśrodkowane guziki „dalej".',
+      'Drzewo dziedzictwa: konary są równej długości (finały R&D i Rynku dorobione), a liczba poziomów = numer rzędu (koniec z pomieszanymi poziomami i kosztami od 7. rzędu). Nagłówki konarów nie zjeżdżają przy przewijaniu.',
+      'Kantor pojawia się dopiero po kupieniu ZX Spectruma (wcześniej wyskakiwał od startu każdej kolejnej pięciolatki).',
+      'Drobne: usunięty migający pasek/„błysk" przy szybkim kupowaniu maszyn; znacznik mnożnika (×10/×100) nie zmienia już wysokości kart.',
+    ],
+  },
+  {
+    version: '0.4.2',
     date: '2026-07-04',
     items: [
       'Eksport i import zapisu (.k7) przeniesione do Ustawień — nowa sekcja „Zapis".',
