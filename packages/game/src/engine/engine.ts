@@ -320,6 +320,7 @@ export class Engine {
 
   tick(dtSec: number): void {
     if (dtSec <= 0) return;
+    if (this.state.interRun) return; // limbo między pięciolatkami — stara gra skończona, nowa jeszcze nie ruszyła
     const rates = this.currentRates();
     this.lastRates = rates; // zasil `tempo.<zasob>` w formułach warunków/odblokowań (Faza 5A)
     const dt = new Decimal(dtSec);
@@ -348,6 +349,8 @@ export class Engine {
 
   /** Doliczenie po powrocie (closed-form O(1)); zwraca podsumowanie zarobku do pokazania graczowi. */
   catchUp(elapsedSec: number): CatchUpResult {
+    // W limbo (między pięciolatkami) czas NIE liczy się jako offline — nowa gra jeszcze nie ruszyła.
+    if (this.state.interRun) return { seconds: 0, gains: [] };
     const e = Math.max(0, Math.min(elapsedSec, MAX_CATCHUP_SEC));
     // Zarobek liczymy z TEMPA × czas, a NIE z różnicy „stan przed/po": gdy danego zasobu masz o rzędy
     // wielkości więcej niż przybyło, różnica gubi się w precyzji liczby (1e40 + 1e25 ≈ 1e40) i raport
@@ -445,11 +448,12 @@ export class Engine {
   // --- gielda / czarny rynek (kantor) ----------------------------------------
 
   gieldaUnlocked(): boolean {
-    return (
-      this.ownedOf('spectrum').gt(ZERO) ||
-      (this.state.stats.producedTotal['dewizy'] ?? ZERO).gt(ZERO) ||
-      !!this.state.flags['mechanika.gielda']
-    );
+    // Kantor odblokowuje się dopiero, gdy KUPISZ ZX Spectrum (pierwsze prawdziwe dewizy „spod lady")
+    // albo jawnie flagą. Wcześniej warunkiem było all-time `producedTotal.dewizy > 0`, ale to PRZEŻYWA
+    // Denominację (metryka all-time), więc po pierwszej pięciolatce Kantor wyskakiwał od razu na starcie
+    // każdej następnej — nawet bez sprzętu. Teraz zależy od BIEŻĄCEGO posiadania Spectruma (życzenie:
+    // minigra ma się pojawiać dopiero po odblokowaniu/zakupie).
+    return this.ownedOf('spectrum').gt(ZERO) || !!this.state.flags['mechanika.gielda'];
   }
 
   /** Kurs (ile cykli za 1 dewize) — peg do produkcji all-time + plynne wahanie (dwie sinusoidy). */
@@ -700,15 +704,20 @@ export class Engine {
     return evalBool(d.unlock, this.queryCtx());
   }
 
-  /** Ustaw doktryne na biezaca pieciolatke. Zeruje licznik „bomby" i ewentualny poprzedni kryzys. */
+  /** Ustaw doktryne na biezaca pieciolatke (id='' = „bez doktryny", pomiń). Zamyka etap Zjazdu w limbo
+   *  → plansza „nowa pięciolatka". Zeruje licznik „bomby" i ewentualny poprzedni kryzys. */
   chooseDoctrine(id: string): boolean {
-    if (!this.doctrineAvailable(id)) return false;
-    this.state.doctrine = id;
-    this.state.flags['doktryna_t'] = 0;
-    this.state.flags['kryzys_fired'] = 0;
-    this.state.flags['kryzys'] = 0;
-    this.state.stats.counters['zjazdy'] = (this.state.stats.counters['zjazdy'] ?? 0) + 1;
-    this.recomputeModifiers();
+    if (id !== '' && !this.doctrineAvailable(id)) return false;
+    if (id !== '') {
+      this.state.doctrine = id;
+      this.state.flags['doktryna_t'] = 0;
+      this.state.flags['kryzys_fired'] = 0;
+      this.state.flags['kryzys'] = 0;
+      this.state.stats.counters['zjazdy'] = (this.state.stats.counters['zjazdy'] ?? 0) + 1;
+      this.recomputeModifiers();
+    }
+    // Zatwierdzenie (lub pominięcie) doktryny domyka Zjazd → plansza „nowa pięciolatka".
+    if (this.state.interRun === 'zjazd') this.state.interRun = 'splash';
     return true;
   }
 
@@ -866,10 +875,26 @@ export class Engine {
     this.goalsCacheAt = 0; // cele liczymy od nowa (rozgrywka się zresetowała)
 
     applyStartWith(this.state, this.registry); // wezly „startowe” z drzewa
+    // Wejście w LIMBO: stara rozgrywka skończona, nowa STOI (nie tyka), dopóki gracz nie przejdzie
+    // ceremonia → drzewo → (Zjazd) → plansza. Trwałe w save → można wrócić do tego etapu po zamknięciu.
+    this.state.interRun = 'ceremony';
+    this.state.interRunGain = gain;
     this.recomputeModifiers();
     const odzDef = this.registry.resources.get('odznaczenia');
     const forms = odzDef ? formsFor(odzDef) : nameForms('odznaczenia');
     return { gain, gained: formatNumber(gain), unit: pluralizePL(gain.toNumber(), forms) };
+  }
+
+  /** Przejście fazy limbo między pięciolatkami. `phase='play'` (lub '') = FORMALNY start nowej
+   *  rozgrywki: kasujemy limbo i USTAWIAMY lastSeen na TERAZ (czas limbo nie liczy się jako offline). */
+  setInterRun(phase: string): void {
+    if (phase === 'play' || phase === '') {
+      this.state.interRun = '';
+      this.state.interRunGain = ZERO;
+      this.state.stats.lastSeen = Date.now();
+      return;
+    }
+    this.state.interRun = phase;
   }
 
   // --- drzewo dziedzictwa ----------------------------------------------------
@@ -960,6 +985,7 @@ export class Engine {
   }
 
   updateEvents(nowMs: number): void {
+    if (this.state.interRun) return; // limbo między pięciolatkami — żadne zdarzenia
     if (this.eventsPaused) return; // minigra/immersja — zadne nowe okno nie wyskakuje
     if (this.eventActive) return;
     const ctx = this.queryCtx();
@@ -1490,6 +1516,11 @@ export class Engine {
       zalatwianie,
       zjazd,
       dyplomacja,
+      interRun: {
+        phase: this.state.interRun,
+        gain: formatNumber(this.state.interRunGain),
+        gainUnit: pluralizePL(this.state.interRunGain.toNumber(), formsFor(this.registry.resources.get('odznaczenia')!)),
+      },
       tasmaUnlocked: !!this.state.flags['mechanika.minigra_tasma'],
       okazjeUnlocked: this.okazjeUnlocked(),
       buffs: (() => {

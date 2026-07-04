@@ -321,6 +321,38 @@ PWA/desktop + Firebase sync. **Odłożona** do czasu rozbudowy ulepszeń (decyzj
 
 ## Rundy szlifu (poza fazami — na życzenie właściciela po testach)
 Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
+- ✅ **2026-07-04 — „limbo" między pięciolatkami + drzewo + regresje (wersja 0.4.3) — czeka na test:**
+  - **LIMBO (najważniejsze):** nowe trwałe `GameState.interRun` ('' | 'ceremony' | 'tree' | 'zjazd' |
+    'splash') + `interRunGain` (serializowane). `denominate()` wchodzi w 'ceremony'; `tick()`/`catchUp()`/
+    `updateEvents()` **wcześnie wychodzą, gdy interRun ustawione** (gra STOI — stara skończona, nowa nie
+    ruszyła). `setInterRun(phase)`: 'play' kasuje limbo i ustawia `lastSeen=now` (czas limbo ≠ offline).
+    `chooseDoctrine(id)` (id='' dozwolone) domyka 'zjazd'→'splash'. Snapshot niesie `interRun{phase,gain,
+    gainUnit}`. Protokół+worker: `setInterRun`. **Odporne na reload** — po zamknięciu gry wracamy do tego
+    samego etapu. UI: bridge wywodzi `ceremony/treeStartFlow/zjazdOpen/newRunSplash` z `snapshot.interRun`
+    (derived, JEDNO źródło prawdy); przejścia to wiadomości. `overlayOpen` dostał `treeStartFlow`.
+  - **Guziki flow:** Ceremonia „Otwórz Dziedzictwo ▶" + nota „nowa jeszcze nie ruszyła". Drzewo: guzik
+    „Dalej: wybór doktryny ▶" / „Zatwierdź dziedzictwo — dalej ▶" (zależnie od Zjazdu), **wyśrodkowany**.
+    Zjazd: wybór **dwuetapowy** (klik = podświetlenie `.selected`, potem „Zatwierdź: X ▶" / „Rusz bez
+    doktryny ▶") + **„◀ Wróć do ulepszeń"** (`backToTree`); oba **wyśrodkowane**. Plansza „Nowa
+    pięciolatka" trwa **2 s** (anim newrunFade 2s) i jej ZNIKNIĘCIE = formalny start (NewRunSplash odlicza
+    2 s → `finishNewRun`).
+  - **Drzewo — poziomy/koszty/symetria:** reguła **numer rzędu = liczba poziomów** (ręczne rzędy 7–9
+    poprawione na 7/8/9; ogon `genTree` = rzędy 11..24, `levels=row`, koszt `15000×1.6^t` monotoniczny i
+    droższy niż finał — koniec z „dziurą" 120). Dorobione finały rzędu 10: **`t_fin_rd` (Krzemowy szczyt)**
+    i **`t_fin_rynek` (Wielka prywatyzacja)** — konary równej długości; ogony R&D/Rynku startują od nich.
+    `t_order` = 10 poziomów (×1,4/poz. zamiast ×5 raz). **Nagłówki konarów sticky** (`.tree-col-title`).
+  - **Kantor gate:** `gieldaUnlocked()` bez all-time `producedTotal.dewizy` (przeżywało Denominację) →
+    tylko `ownedOf('spectrum')||flaga`. Kantor pojawia się po kupnie Spectruma.
+  - **Regresje 0.4.2:** usunięta animacja **buyPulse** (scale rozpychał kartę → migający poziomy pasek w
+    `.gen-scroll`; efekt i tak odpalał nieregularnie); `.gen-scroll/.up-scroll` mają `overflow-x:hidden`.
+    Pastylka **`.gen-mult`** bez pionowego paddingu + `.gen-foot{min-height:20px}` → x1↔x10 bez skoku
+    wysokości (zweryfikowane: karta 100px w obu, foot 20px).
+  - *Testy:* nowy `limbo.test.ts` (+5: ceremonia po Denominacji, tick/catchUp stoją, play wznawia,
+    doktryna→splash, serializacja przeżywa), `kantor.test.ts` (+2: gate), `phaseU3` (poziomy=rząd, koszty
+    monotoniczne, symetria konarów). **277 testów** (193 game + 61 shared + 23 studio), typecheck+build
+    czyste. Zweryfikowane na żywo: Kantor nieobecny wcześnie, pastylka bez skoku, brak poziomego paska,
+    produkcja normalnie płynie (gra nie jest przypadkiem w limbo), konsola czysta. **Pełny flow
+    Denominacji (późna gra) — pokryty testami silnika; właściciel sprawdzi na swoim zapisie.**
 - ✅ **2026-07-04 — batch poprawek (wersja 0.4.2) — czeka na test:**
   - **Zapis → Ustawienia:** guziki „Eksport .k7"/„Import .k7" przeniesione z dolnego paska do Ustawień
     (nowa sekcja „Zapis"); ResourceBar odchudzony (Zapisz/Ustawienia/Reset).
@@ -513,7 +545,7 @@ Drobne poprawki zgłaszane z gry, nieprzypisane do jednej fazy:
 ---
 
 ## Stan techniczny
-- Testy: **268 zielonych** (184 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety). Wersja 0.4.2.
+- Testy: **277 zielonych** (193 game + 61 shared + 23 studio). Typecheck i build czyste (3 pakiety). Wersja 0.4.3.
 - Studio DLC: osobny workspace `packages/studio` (port 5174). `npm run dev:studio`, `npm run build:studio`.
 - Podpis DLC (5.5D): `npm run sign:dlc -- keygen|sign|verify` (lub `node packages/studio/tools/sign-dlc.mjs`),
   audyt bundla `npm run audit:studio`. Klucz PUBLICZNY wbudowany w `shared/trust.ts`; PRYWATNY offline w

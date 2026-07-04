@@ -37,6 +37,7 @@ export type WorkerIn =
   | { type: 'chooseDoctrine'; id: string }
   | { type: 'improveRelation'; id: string }
   | { type: 'denominate' }
+  | { type: 'setInterRun'; phase: string }
   | { type: 'requestSave' }
   | { type: 'restore'; saveBytes: ArrayBuffer }
   | { type: 'reset' }

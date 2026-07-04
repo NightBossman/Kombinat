@@ -1,11 +1,5 @@
 <script lang="ts">
-  import { ceremony, treeOpen, treeStartFlow } from '../engine/bridge';
-
-  function proceed(): void {
-    ceremony.set(null);
-    treeStartFlow.set(true); // drzewo otwarte jako „nowa pięciolatka”
-    treeOpen.set(true);
-  }
+  import { ceremony, proceedFromCeremony } from '../engine/bridge';
 </script>
 
 {#if $ceremony}
@@ -15,7 +9,8 @@
       <div class="ceremony-title">DENOMINACJA</div>
       <div class="ceremony-sub">Zera lecą w dół. Wartość zostaje.</div>
       <div class="ceremony-gain">+{$ceremony.gained} {$ceremony.unit}</div>
-      <button class="ceremony-btn" onclick={proceed}>Otwórz Dziedzictwo</button>
+      <div class="ceremony-note">Stara pięciolatka zamknięta. Nowa jeszcze nie ruszyła — najpierw rozdaj dziedzictwo.</div>
+      <button class="ceremony-btn" onclick={proceedFromCeremony}>Otwórz Dziedzictwo ▶</button>
     </div>
   </div>
 {/if}

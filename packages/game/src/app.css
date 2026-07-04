@@ -385,6 +385,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Nigdy nie pokazuj POZIOMEGO paska — karty zawsze mieszczą się na szerokość, a ewentualne
+     chwilowe rozpychanie (animacje) nie ma migać paskiem u dołu kontenera. */
+  overflow-x: hidden;
 }
 .gen-card {
   display: flex;
@@ -470,21 +473,27 @@ body {
 .gen-foot {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 13px;
+  /* Stała wysokość wiersza — pastylka mnożnika (×10/×100) NIE może wydłużać karty przy zmianie z ×1
+     (i z powrotem skracać). Rezerwujemy tyle, ile zajmuje najwyższy stan, więc nic nie „podskakuje". */
+  min-height: 20px;
 }
 .gen-cost {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 7px; /* wyraźny odstęp mnożnik ↔ koszt (koniec ze sklejonym „cyklix100") */
 }
 .gen-cost-val {
   color: #e0c87a;
 }
 /* Mnożnik zakupu jako mała „pastylka" PRZED kosztem — czytelnie oddzielony, a zarazem wskazuje
-   zależność: tyle sztuk KOSZTUJE tyle (np. „×100  4,46e88 cykli”). */
+   zależność: tyle sztuk KOSZTUJE tyle (np. „×100  4,46e88 cykli”). Bez pionowego paddingu i z niską
+   interlinią, by pastylka mieściła się w wysokości wiersza kosztu (nie rozpycha karty). */
 .gen-mult {
   flex: none;
-  padding: 1px 7px;
+  padding: 0 7px;
+  line-height: 1.4;
   font-weight: 700;
   font-size: 11px;
   color: var(--accent);
@@ -914,13 +923,19 @@ body {
   align-content: start;
 }
 .tree-col-title {
+  /* Nagłówek konaru PRZYPIĘTY do góry przewijanego drzewa — przy scrollu nie zjeżdża (jak nagłówki
+     kontenerów maszyn/ulepszeń); pod niego wjeżdżają kolejne węzły. Nieprzezroczyste tło je zasłania. */
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--panel);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--accent-strong);
   font-weight: 700;
   text-align: center;
-  padding-bottom: 4px;
+  padding: 2px 0 4px;
   margin-bottom: 2px;
   border-bottom: 1px solid var(--border);
 }
@@ -1044,7 +1059,7 @@ body {
 }
 .tree-foot {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center; /* guzik „dalej" wyśrodkowany (życzenie właściciela) */
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid var(--border);
@@ -1088,7 +1103,8 @@ body {
   gap: 8px;
   background: var(--bg);
   pointer-events: none;
-  animation: newrunFade 1.8s ease-in-out forwards;
+  /* 2 s — plansza gaśnie DOKŁADNIE, gdy limbo się kończy (jej zniknięcie = formalny start rozgrywki). */
+  animation: newrunFade 2s ease-in-out forwards;
 }
 .newrun-text {
   font-size: 28px;
@@ -1478,6 +1494,14 @@ body {
     opacity: 1;
   }
 }
+.ceremony-note {
+  position: relative;
+  margin-top: 12px;
+  max-width: 360px;
+  font-size: 12.5px;
+  color: var(--dim);
+  line-height: 1.4;
+}
 .ceremony-btn {
   position: relative;
   margin-top: 24px;
@@ -1746,26 +1770,8 @@ body:not(.anim-on) *::after {
   animation: shadowPulse 2.4s ease-in-out infinite;
 }
 
-/* Poświata przy zakupie (jednorazowa). */
-@keyframes buyPulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 transparent;
-  }
-  40% {
-    transform: scale(1.025);
-    box-shadow: 0 0 12px 2px var(--glow);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-/* Krotka i RESTARTOWALNA — przy szybkim klikaniu kazdy zakup daje czysty blysk
-   (GeneratorCard wymusza restart animacji, a nie czeka az poprzednia dobiegnie). */
-.gen-card.pulse-buy {
-  animation: buyPulse 0.2s ease-out;
-}
+/* (Usunięto „błysk zakupu" — jego `transform: scale()` na ułamek sekundy rozpychał kartę i wywoływał
+   migający poziomy pasek przewijania w kontenerze maszyn; efekt i tak odpalał się nieregularnie.) */
 
 /* Plansza startowa (boot) — raz przy wejsciu. */
 .boot-splash {

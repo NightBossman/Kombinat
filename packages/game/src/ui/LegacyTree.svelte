@@ -9,9 +9,11 @@
     { id: 'rynek', label: 'Rynek' },
   ];
   const nodesOf = (br: string): TreeNodeView[] => ($snapshot?.tree ?? []).filter((n) => n.branch === br);
+  // Po drzewie: jeśli Zjazd PZPR odblokowany → jeszcze wybór doktryny; inaczej wprost plansza startowa.
+  const zjazdNext = $derived($snapshot?.zjazd?.unlocked ?? false);
 </script>
 
-{#if $treeOpen && $snapshot}
+{#if ($treeOpen || $treeStartFlow) && $snapshot}
   <div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Drzewo dziedzictwa">
     <div class="tree-modal">
       <div class="tree-head">
@@ -69,7 +71,9 @@
 
       {#if $treeStartFlow}
         <div class="tree-foot">
-          <button class="newrun-btn" onclick={startNewRun}>Rozpocznij nową pięciolatkę ▶</button>
+          <button class="newrun-btn" onclick={startNewRun}>
+            {#if zjazdNext}Dalej: wybór doktryny ▶{:else}Zatwierdź dziedzictwo — dalej ▶{/if}
+          </button>
         </div>
       {/if}
     </div>

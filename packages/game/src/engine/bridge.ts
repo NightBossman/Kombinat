@@ -11,56 +11,63 @@ import { settings } from './settings.svelte';
 export const snapshot = writable<Snapshot | null>(null);
 export const ready = writable<{ issues: SerializedIssue[]; ticker: TickerLine[] } | null>(null);
 export const toast = writable<string | null>(null);
-/** Dane ceremonii Denominacji (null = brak). UI pokazuje nakladke. */
-export const ceremony = writable<{ gained: string; unit: string } | null>(null);
-/** Czy okno „Dziedzictwo” (drzewo) jest otwarte. */
+// === LIMBO między pięciolatkami (0.4.3) — JEDNO ŹRÓDŁO PRAWDY: silnik (snapshot.interRun.phase) ===
+// Wszystkie nakładki „nowej pięciolatki" wywodzimy z migawki, więc po zamknięciu i ponownym otwarciu
+// gry wracamy DOKŁADNIE do tego samego etapu (ceremonia → drzewo → Zjazd → plansza). Przejścia to
+// wiadomości do silnika (setInterRun/chooseDoctrine), a on je utrwala w save.
+const interRunPhase = derived(snapshot, (s) => s?.interRun?.phase ?? '');
+
+/** Dane ceremonii Denominacji (null = brak) — z limbo. UI pokazuje nakładkę. */
+export const ceremony = derived(snapshot, (s) =>
+  s?.interRun?.phase === 'ceremony' ? { gained: s.interRun.gain, unit: s.interRun.gainUnit } : null,
+);
+/** Czy okno „Dziedzictwo” (drzewo) jest otwarte w trybie PODGLĄDU (w trakcie gry). */
 export const treeOpen = writable<boolean>(false);
-/** Czy drzewo otwarto w trybie „po Denominacji” (nowa pieciolatka) — zmienia stopke okna. */
-export const treeStartFlow = writable<boolean>(false);
+/** Czy drzewo jest w trybie „nowa pięciolatka” (etap limbo 'tree') — pozwala kupować i zmienia stopkę. */
+export const treeStartFlow = derived(interRunPhase, (p) => p === 'tree');
 /** Raport offline (null = brak) — pokazywany jako okno na srodku, nie znikajacy toast. */
 export const offlineReport = writable<{ durationText: string; gains: OfflineGain[] } | null>(null);
-/** Krotka plansza przejscia „nowa pieciolatka” po wyjsciu z drzewa po Denominacji. */
-export const newRunSplash = writable<boolean>(false);
+/** Krótka plansza „nowa pięciolatka” (etap limbo 'splash'). Jej ZNIKNIĘCIE = formalny start gry. */
+export const newRunSplash = derived(interRunPhase, (p) => p === 'splash');
+/** Czy okno „Zjazd PZPR” (wybór doktryny) jest otwarte (etap limbo 'zjazd'). */
+export const zjazdOpen = derived(interRunPhase, (p) => p === 'zjazd');
 
-/** Czy okno „Zjazd PZPR” (wybór doktryny na nową pięciolatkę) jest otwarte (Faza 4B). */
-export const zjazdOpen = writable<boolean>(false);
-
-/** Plansza „nowa pięciolatka” + ewentualny splash (wspólne dla ścieżki ze Zjazdem i bez). */
-function runSplash(): void {
-  newRunSplash.set(true);
-  setTimeout(() => newRunSplash.set(false), 1800);
+/** Ceremonia → drzewo Dziedzictwa (tryb nowej pięciolatki). */
+export function proceedFromCeremony(): void {
+  send({ type: 'setInterRun', phase: 'tree' });
 }
 
-/** Zamyka drzewo po Denominacji. Jeśli Zjazd odblokowany — najpierw wybór doktryny, potem start. */
+/** Z drzewa DALEJ: jeśli Zjazd odblokowany → wybór doktryny, inaczej → plansza startowa. */
 export function startNewRun(): void {
-  treeOpen.set(false);
-  treeStartFlow.set(false);
   let unlocked = false;
   snapshot.subscribe((s) => (unlocked = !!s?.zjazd?.unlocked))();
-  if (unlocked) zjazdOpen.set(true);
-  else runSplash();
+  send({ type: 'setInterRun', phase: unlocked ? 'zjazd' : 'splash' });
 }
 
-/** Wybór doktryny na Zjeździe i start pięciolatki (Faza 4B). `id=''` = pominięcie (bez doktryny). */
+/** Zjazd → POWRÓT do drzewa (to nie jest jeszcze start gry — można coś jeszcze dokupić). */
+export function backToTree(): void {
+  send({ type: 'setInterRun', phase: 'tree' });
+}
+
+/** Wybór (lub pominięcie, id='') doktryny na Zjeździe → plansza startowa. Silnik domyka etap. */
 export function chooseDoctrine(id: string): void {
-  if (id) {
-    playSfx('upgrade');
-    send({ type: 'chooseDoctrine', id });
-  }
-  zjazdOpen.set(false);
-  runSplash();
+  if (id) playSfx('upgrade');
+  send({ type: 'chooseDoctrine', id });
+}
+
+/** Koniec planszy „nowa pięciolatka" (po 2 s) = FORMALNY start nowej rozgrywki (silnik wznawia produkcję). */
+export function finishNewRun(): void {
+  send({ type: 'setInterRun', phase: 'play' });
 }
 
 /** Otwiera drzewo w trybie podgladu (w trakcie gry, bez „nowej pieciolatki”). */
 export function openTree(): void {
-  treeStartFlow.set(false);
   treeOpen.set(true);
 }
 
-/** Zamyka drzewo bez ceremonii (gdy otwarto je tylko do podejrzenia w trakcie gry). */
+/** Zamyka drzewo-podglad. */
 export function closeTree(): void {
   treeOpen.set(false);
-  treeStartFlow.set(false);
 }
 
 // --- Dziennik: chronologiczne archiwum zdarzeń z TWARDYM limitem i rotacją pamięci (PLAN 14/16) ---
@@ -148,7 +155,7 @@ function onMessage(msg: WorkerOut): void {
       logDziennik('offline', 'Powrót po przerwie (' + fmtDuration(msg.seconds) + ')');
       break;
     case 'denominated':
-      ceremony.set({ gained: msg.gained, unit: msg.unit });
+      // Ceremonię pokazuje teraz LIMBO (snapshot.interRun) — tu tylko wpis do Dziennika.
       logDziennik('denom', 'Denominacja: +' + msg.gained + ' ' + msg.unit);
       break;
     case 'achievements':
@@ -379,6 +386,7 @@ export function resetGame(): void {
 export const overlayOpen = derived(
   [
     treeOpen,
+    treeStartFlow,
     lexiconOpen,
     settingsOpen,
     achievementsOpen,
@@ -395,8 +403,8 @@ export const overlayOpen = derived(
     ceremony,
     newRunSplash,
   ],
-  ([tree, lex, set, ach, kad, gie, mini, dz, zal, zja, dyp, sta, den, off, cer, nrs]) =>
-    tree || lex || set || ach || kad || gie || mini || dz || zal || zja || dyp || sta || den || off !== null || cer !== null || nrs,
+  ([tree, treeFlow, lex, set, ach, kad, gie, mini, dz, zal, zja, dyp, sta, den, off, cer, nrs]) =>
+    tree || treeFlow || lex || set || ach || kad || gie || mini || dz || zal || zja || dyp || sta || den || off !== null || cer !== null || nrs,
 );
 
 // Licznik zdarzeń PAUZUJEMY, gdy otwarta jest JAKAKOLWIEK nakładka/okno (minigra, Kantor, Załatwianie,
