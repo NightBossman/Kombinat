@@ -30,13 +30,15 @@
       {/each}
     </span>
   </div>
-  {#each unlocked as g (g.id)}
-    <GeneratorCard gen={g} />
-  {/each}
-  {#if nextLocked}
-    <div class="gen-card locked" aria-hidden="true">
-      <div class="gen-head"><span class="gen-name">???</span></div>
-      <p class="gen-flavor">Coś czeka na odblokowanie…</p>
-    </div>
-  {/if}
+  <div class="gen-scroll">
+    {#each unlocked as g (g.id)}
+      <GeneratorCard gen={g} />
+    {/each}
+    {#if nextLocked}
+      <div class="gen-card locked" aria-hidden="true">
+        <div class="gen-head"><span class="gen-name">???</span></div>
+        <p class="gen-flavor">Coś czeka na odblokowanie…</p>
+      </div>
+    {/if}
+  </div>
 </section>

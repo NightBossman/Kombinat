@@ -10,7 +10,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: APP_VERSION, // 0.4.1
+    version: APP_VERSION, // 0.4.2
+    date: '2026-07-04',
+    items: [
+      'Eksport i import zapisu (.k7) przeniesione do Ustawień — nowa sekcja „Zapis".',
+      'Podczas każdej minigry (i innych okien) nie wyskakują już powiadomienia o wydarzeniach — koniec z rozpraszaniem.',
+      'Dyplomacja: bonus z relacji pokazywany z jednym miejscem po przecinku (np. „Dewizy +7,3%"); usunięto zbędny procent z paska postępu.',
+      'Załatwianie: ryzyko kontroli opada nieco wolniej, a przy 100% nalot SB kasuje wszystkie trwające załatwienia; naraz działa najwyżej 6 bonusów. Krótszy opis Dygnitarza.',
+      'Denominacja: guzik „Tak, denominuj" wygląda jak „Denominacja", a zysk odznaczeń jest wyraźnie wyróżniony; podczas pytania nie wyskakują złote ciastka.',
+      'Maszyny: koszt przy mnożniku (×10/×100/Max) czytelnie oddzielony od kwoty.',
+      'Nagłówki „Maszyny" i „Ulepszenia" zostają na miejscu przy przewijaniu (znika tylko pierwsza pozycja), a zaokrąglona ramka jest zawsze widoczna.',
+      'Nowa opcja: wczytywanie grafiki minigry „Taśma" z góry — płynniejsze pierwsze otwarcie.',
+    ],
+  },
+  {
+    version: '0.4.1',
     date: '2026-07-01',
     items: [
       'Dyplomacja: każdy kraj w bloku ma teraz INNĄ premię (koszty, produkcja, cykle, dewizy, klikanie, „po trochu").',

@@ -3,8 +3,6 @@
   import {
     snapshot,
     manualSave,
-    exportSave,
-    importSave,
     resetGame,
     lexiconOpen,
     achievementsOpen,
@@ -22,19 +20,7 @@
   // Główne waluty pokazujemy z 2 miejscami po przecinku (płynna wartość + STAŁE 2 dp = brak trzęsienia).
   const DECIMAL_RES = new Set(['cykle', 'dewizy']);
 
-  let fileInput = $state<HTMLInputElement | null>(null);
   let confirmReset = $state(false);
-
-  function onImportClick(): void {
-    fileInput?.click();
-  }
-
-  async function onFile(e: Event): Promise<void> {
-    const input = e.currentTarget as HTMLInputElement;
-    const f = input.files?.[0];
-    if (f) await importSave(f);
-    input.value = '';
-  }
 
   function doReset(): void {
     confirmReset = false;
@@ -92,11 +78,8 @@
       <button onclick={() => statystykiOpen.update((v) => !v)}>Statystyki</button>
     {/if}
     <button onclick={manualSave}>Zapisz</button>
-    <button onclick={exportSave}>Eksport .k7</button>
-    <button onclick={onImportClick}>Import .k7</button>
     <button onclick={() => settingsOpen.update((v) => !v)}>Ustawienia</button>
     <button class="danger" onclick={() => (confirmReset = true)}>Reset</button>
-    <input bind:this={fileInput} type="file" accept=".k7" onchange={onFile} hidden />
   </div>
 </footer>
 

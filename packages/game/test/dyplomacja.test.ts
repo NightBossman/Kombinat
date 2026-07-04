@@ -67,7 +67,7 @@ describe('Dyplomacja — nowe premie działają', () => {
   });
 });
 
-describe('Dyplomacja — czytelność (relacja zerowa + postęp po przecinku)', () => {
+describe('Dyplomacja — czytelność (relacja zerowa + bonus po przecinku)', () => {
   it('przy relacji zerowej widać KIERUNEK premii (nie „Brak korzyści"), z uwagą o relacji zerowej', () => {
     const rels = eng().snapshot().dyplomacja.relations;
     expect(rels.length).toBeGreaterThan(0);
@@ -77,11 +77,12 @@ describe('Dyplomacja — czytelność (relacja zerowa + postęp po przecinku)', 
     }
   });
 
-  it('postęp relacji ma miejsce po przecinku (widać kroki <1%)', () => {
+  it('bonus z relacji pokazuje DOKŁADNIE jedno miejsce po przecinku (np. „+7,3%")', () => {
     const e = eng();
-    e.improveRelation('zsrr'); // krok +5 na 1000 = 0,5%
-    const zsrr = e.snapshot().dyplomacja.relations.find((r) => r.id === 'zsrr')!;
-    expect(zsrr.relPct).toContain(',');
-    expect(zsrr.relPct).toBe('0,5');
+    e.state.flags['relacja.nrd'] = 1000; // wysoka relacja → wyraźny bonus, wciąż 1-dziesiętny
+    e.recomputeModifiers();
+    const nrd = e.snapshot().dyplomacja.relations.find((r) => r.id === 'nrd')!;
+    expect(nrd.effectText).toMatch(/,\d%/); // przecinek + jedna cyfra po nim
+    expect(nrd.effectText).not.toMatch(/,\d\d%/); // ale nie dwie
   });
 });

@@ -35,7 +35,7 @@
                 <div class="dyp-country" class:maxed={r.atMax}>
                   <div class="dyp-country-head">
                     <span class="dyp-country-name">{r.name}{#if r.atMax}<span class="dyp-max-badge" title="Sojusz zacieśniony na maksa">★</span>{/if}</span>
-                    <span class="dyp-country-rel">{r.relation}/{r.max} · {r.relPct}%</span>
+                    <span class="dyp-country-rel">{r.relation}/{r.max}</span>
                   </div>
                   <div class="dyp-bar"><div class="dyp-bar-fill" style="width:{(r.relation / r.max) * 100}%"></div></div>
                   <span class="dyp-benefit">{r.benefit}</span>

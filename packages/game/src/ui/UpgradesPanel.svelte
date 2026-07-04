@@ -62,6 +62,7 @@
       <input class="up-filter" type="text" placeholder="Szukaj ulepszenia…" bind:value={filter} />
     {/if}
 
+    <div class="up-scroll">
     {#each groups as grp (grp.name)}
       <div class="up-group">
         <div class="up-group-head">
@@ -100,6 +101,7 @@
     {#if groups.length === 0}
       <p class="upgrades-empty">Nic nie pasuje do „{filter}".</p>
     {/if}
+    </div>
   {:else}
     <p class="upgrades-empty">Na razie wszystko wykupione. Rozbuduj park maszyn — nowe ulepszenia odblokują się same.</p>
   {/if}

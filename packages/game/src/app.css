@@ -235,6 +235,30 @@ body {
     min-height: 0;
     overflow-y: auto;
   }
+  /* Moduły „Maszyny" i „Ulepszenia": RAMKA (nagłówek + zaoblona obwódka) stoi na miejscu i jest zawsze
+     w całości widoczna — przewija się tylko lista W ŚRODKU. Kolumna rozciąga się na pełną wysokość wiersza
+     (definite height dla wewn. scrolla), sama nie przewija; moduł kapuje na 100% i oddaje scroll liście.
+     Dzięki temu pierwsza maszyna znika POD stałym nagłówkiem, a górne i dolne zaoblenia nie są ucinane. */
+  .col-mid,
+  .col-right {
+    align-self: stretch;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .col-mid > .upgrades,
+  .col-right > .generators {
+    max-height: 100%;
+    min-height: 0;
+  }
+  .gen-scroll,
+  .up-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* margines na pasek przewijania, by karty nie kleiły się do krawędzi ramki */
+    padding-right: 2px;
+  }
 }
 /* Szeroki desktop: lekko przesuniete proporcje kolumn (lewa stabilna, prawa szersza na zakupy). */
 @media (min-width: 1280px) {
@@ -354,6 +378,14 @@ body {
   border: 1px solid var(--border);
   border-radius: 6px;
 }
+/* Obszar przewijany WEWNĄTRZ modułu — nagłówek (i filtr) zostają na wierzchu, przewija się tylko lista.
+   Na wąskim ekranie to zwykła kolumna (przewija się cała strona); wysokość/scroll dostaje na desktopie. */
+.gen-scroll,
+.up-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .gen-card {
   display: flex;
   flex-direction: column;
@@ -441,11 +473,24 @@ body {
   font-size: 13px;
 }
 .gen-cost {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px; /* wyraźny odstęp mnożnik ↔ koszt (koniec ze sklejonym „cyklix100") */
+}
+.gen-cost-val {
   color: #e0c87a;
 }
+/* Mnożnik zakupu jako mała „pastylka" PRZED kosztem — czytelnie oddzielony, a zarazem wskazuje
+   zależność: tyle sztuk KOSZTUJE tyle (np. „×100  4,46e88 cykli”). */
 .gen-mult {
+  flex: none;
+  padding: 1px 7px;
   font-weight: 700;
+  font-size: 11px;
   color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
 }
 .gen-rate {
   color: var(--accent);
@@ -1616,6 +1661,26 @@ body.keep-bar .modal-overlay {
 .modal-actions button.danger:hover {
   background: var(--danger);
   color: #fff;
+}
+/* „Tak, denominuj" w oknie potwierdzenia wygląda TAK SAMO jak guzik „Denominacja" na pulpicie
+   (spójność: to ten sam czyn). Wyższa swoistość (.modal-actions .denom-btn) bije generyczny guzik okna. */
+.modal-actions .denom-btn {
+  color: var(--bg);
+  background: #c2502f;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-weight: 700;
+}
+.modal-actions .denom-btn:hover {
+  filter: brightness(1.08);
+}
+/* Wartość „+X odznaczeń" w pytaniu o Denominację — złoto prestiżu (spójne z walutą odznaczeń w grze),
+   ale wyraźnie wyróżnione (grubość + tabularne cyfry), by od razu było widać, ile się zyskuje. */
+.denom-gain {
+  color: #e7cf86;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- toast --- */

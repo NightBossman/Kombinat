@@ -21,6 +21,7 @@ export interface Settings {
   autosaveNotify: boolean; // toast przy autozapisie
   okazje: boolean; // czy pojawiają się „okazje" (złote ciastka, uwaga #21)
   cassette3d: boolean; // grafika 3D (Three.js/Threlte) w minigrze „Taśma" (uwaga #20)
+  tasmaPreload: boolean; // wczytuj grafikę minigry „Taśma" od startu strony (płynniejsze 1. otwarcie)
   noChoiceEventModals: boolean; // czy pokazywać okno eventu, gdy nie ma realnego wyboru (≤1 opcja)
 }
 
@@ -38,6 +39,7 @@ const DEFAULTS: Settings = {
   autosaveNotify: true,
   okazje: true,
   cassette3d: true,
+  tasmaPreload: true,
   noChoiceEventModals: true,
 };
 

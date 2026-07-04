@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/wersja-0.4.1-5fa86a" alt="wersja 0.4.1">
+  <img src="https://img.shields.io/badge/wersja-0.4.2-5fa86a" alt="wersja 0.4.2">
   <img src="https://img.shields.io/badge/status-w%20budowie%20(pre--1.0)-d9b25a" alt="status: w budowie">
   <img src="https://img.shields.io/badge/Svelte-5-FF3E00?logo=svelte&logoColor=white" alt="Svelte 5">
   <img src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
@@ -73,7 +73,7 @@ Plany i kontrakty żyją w `docs/` (są nadrzędne wobec kodu):
 
 ## <img src="https://api.iconify.design/lucide/clock.svg?color=%23d9b25a" width="22" align="top"> Wersja i historia zmian
 
-Aktualna wersja: **0.4.1** (pre‑1.0). Pełna lista zmian: **[CHANGELOG.md](CHANGELOG.md)**.
+Aktualna wersja: **0.4.2** (pre‑1.0). Pełna lista zmian: **[CHANGELOG.md](CHANGELOG.md)**.
 W grze wersję i historię zmian widać w oknie **Statystyki**.
 
 ## <img src="https://api.iconify.design/lucide/triangle-alert.svg?color=%23d9b25a" width="22" align="top"> Status

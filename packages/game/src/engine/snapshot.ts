@@ -240,6 +240,9 @@ export interface ZalatwianieView {
   unlocked: boolean;
   /** Ryzyko kontroli 0..100. */
   ryzyko: number;
+  /** Ile bonusów z Załatwiania jest AKTYWNYCH teraz oraz ich maksymalna dozwolona liczba (limit). */
+  activeBribes: number;
+  maxBribes: number;
   bribes: BribeView[];
   /** Towary do kupienia na czarnym rynku (smarujesz nimi taniej niż kopertą). */
   supplies: SupplyView[];
@@ -284,9 +287,7 @@ export interface RelationView {
   /** Aktualny poziom relacji 0..max. */
   relation: number;
   max: number;
-  /** Postęp relacji w % z jednym miejscem po przecinku (np. „0,5") — by kroki <1% były widoczne. */
-  relPct: string;
-  /** Bieżący bonus z relacji opisany słownie (np. „Koszty −18%"). */
+  /** Bieżący bonus z relacji opisany słownie z jednym miejscem po przecinku (np. „Dewizy +7,3%"). */
   effectText: string;
   /** Koszt zacieśnienia o krok (sformatowany) + jednostka (dewizy). */
   cost: string;

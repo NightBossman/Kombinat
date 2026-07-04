@@ -304,21 +304,15 @@ export const dyplomacjaOpen = writable<boolean>(false);
 /** Czy okno „Statystyki" jest otwarte (na razie placeholder — treść dojdzie później). */
 export const statystykiOpen = writable<boolean>(false);
 
+/** Czy otwarte jest okno potwierdzenia Denominacji (lokalne dla panelu, ale globalnie „zajmuje" gracza —
+ *  blokuje złote ciastko i pauzuje eventy, by nic nie wyskakiwało nad pytaniem o nową pięciolatkę). */
+export const denomConfirmOpen = writable<boolean>(false);
+
 /** Zacieśnij relację z krajem/blokiem `id` za dewizy (Faza 4C). */
 export function improveRelation(id: string): void {
   playSfx('buy');
   send({ type: 'improveRelation', id });
 }
-
-// Licznik zdarzeń PAUZUJEMY, gdy gracz jest „zajęty" blokującą nakładką: minigra, raport offline,
-// ceremonia Denominacji albo PRZEGLĄDANIE DRZEWA DZIEDZICTWA (by nic nie przerywało planowania ulepszeń).
-// Dzięki temu event nie wyskakuje pod spodem (psując immersję) ani nie odpala się, zanim potwierdzimy
-// powrót po offline — co potrafiło zablokować UI (uwagi #4 / #9 / #12). Wznawia się po zamknięciu nakładek.
-const eventsBusy = derived(
-  [minigraOpen, offlineReport, ceremony, treeOpen],
-  ([m, o, c, t]) => m || o !== null || c !== null || t,
-);
-eventsBusy.subscribe((busy) => send({ type: 'setEventsPaused', paused: busy }));
 
 /** Czy okno Leksykonu jest otwarte. */
 export const lexiconOpen = writable<boolean>(false);
@@ -396,10 +390,19 @@ export const overlayOpen = derived(
     zjazdOpen,
     dyplomacjaOpen,
     statystykiOpen,
+    denomConfirmOpen,
     offlineReport,
     ceremony,
     newRunSplash,
   ],
-  ([tree, lex, set, ach, kad, gie, mini, dz, zal, zja, dyp, sta, off, cer, nrs]) =>
-    tree || lex || set || ach || kad || gie || mini || dz || zal || zja || dyp || sta || off !== null || cer !== null || nrs,
+  ([tree, lex, set, ach, kad, gie, mini, dz, zal, zja, dyp, sta, den, off, cer, nrs]) =>
+    tree || lex || set || ach || kad || gie || mini || dz || zal || zja || dyp || sta || den || off !== null || cer !== null || nrs,
 );
+
+// Licznik zdarzeń PAUZUJEMY, gdy otwarta jest JAKAKOLWIEK nakładka/okno (minigra, Kantor, Załatwianie,
+// Dyplomacja, drzewo, raport offline, ceremonia, potwierdzenie Denominacji, okna-czytanki…). Ogólna reguła:
+// nikt nie lubi, gdy event wyskakuje i rozprasza go w trakcie minigry — więc depesze czekają, aż gracz
+// wróci na czysty pulpit. Timer zdarzeń „zamraża się" na czas pauzy (silnik przesuwa lastEventMs), więc
+// nic nie wystrzeliwuje natychmiast po zamknięciu. Obejmuje też przyszłe minigry — wystarczy dodać ich
+// „…Open" do `overlayOpen` powyżej (uwagi #4 / #9 / #12 + prośba właściciela 2026-07-04).
+overlayOpen.subscribe((open) => send({ type: 'setEventsPaused', paused: open }));

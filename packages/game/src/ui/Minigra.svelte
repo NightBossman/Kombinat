@@ -8,6 +8,20 @@
   // pobieranego dopiero przy pierwszym otwarciu minigry, więc nie obciąża startu gry.
   const cassette = $derived(settings().cassette3d ? import('./Cassette3D.svelte') : null);
 
+  // Preload (opcjonalny) — jeśli włączony, ROZGRZEWAMY chunk sceny 3D już przy starcie strony (w wolnej
+  // chwili), by pierwsze otwarcie minigry było płynne, bez „laga" na słabszym sprzęcie. Ten sam specyfikator
+  // co wyżej → drugi import() zwraca z cache natychmiast. Odpalamy raz.
+  let preloaded = false;
+  $effect(() => {
+    if (preloaded || !settings().cassette3d || !settings().tasmaPreload) return;
+    preloaded = true;
+    const warm = (): void => void import('./Cassette3D.svelte');
+    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void })
+      .requestIdleCallback;
+    if (ric) ric(warm, { timeout: 3000 });
+    else setTimeout(warm, 1500);
+  });
+
   // Minigra „Wczytywanie z taśmy": marker przelatuje tam i z powrotem, gracz zatrzymuje go
   // jak najbliżej strefy SYNC. Im celniej, tym lepsza jakość wczytania → większa nagroda.
   // Poziom trudności (uwaga #5): wyższy = szybszy marker + węższa strefa, ale większa nagroda.

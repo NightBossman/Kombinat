@@ -14,6 +14,8 @@
   const z = $derived($snapshot?.zalatwianie ?? null);
   const supplies = $derived(z?.supplies ?? []);
   const deal = $derived(z?.supplyDeal ?? null);
+  // Limit jednoczesnych załatwień — przy pełnym komplecie blokujemy zakup kolejnych (silnik też pilnuje).
+  const atLimit = $derived(!!z && z.activeBribes >= z.maxBribes);
   // Pasek-wskaźnik PŁYNNY (reguła: paski odliczające płyną jak liczby): silnik podaje CIĄGŁY `fill`
   // (0..1, sub-sekundowo), a wspólna pętla rAF interpoluje go na 60 fps — bez skoków co sekundę.
   $effect(() => {
@@ -25,7 +27,7 @@
     { id: 'magazynier', label: 'Magazynier', icon: Boxes, desc: 'Deficytowe części — czasowo taniej.' },
     { id: 'celnik', label: 'Celnik', icon: ShieldCheck, desc: 'Import mimo embarga — więcej dewiz.' },
     { id: 'urzednik', label: 'Urzędnik', icon: Stamp, desc: 'Papierologia poza kolejnością — więcej produkcji.' },
-    { id: 'dygnitarz', label: 'Dygnitarz', icon: Crown, desc: 'Najwyższe dojścia — Twój czyn (klikanie) waży jak rozkaz z góry.' },
+    { id: 'dygnitarz', label: 'Dygnitarz', icon: Crown, desc: 'Najwyższe dojścia — Twój czyn waży jak rozkaz.' },
   ];
   const forTarget = (t: string): BribeView[] => (z?.bribes ?? []).filter((b) => b.target === t);
 
@@ -52,6 +54,11 @@
         <span class="zal-risk-label">Ryzyko kontroli</span>
         <div class="zal-risk-bar"><div class="zal-risk-fill" style="width:{z.ryzyko}%"></div></div>
         <span class="zal-risk-val">{z.ryzyko}%</span>
+      </div>
+      <div class="zal-active" class:full={atLimit}>
+        Aktywne załatwienia: <b>{z.activeBribes}/{z.maxBribes}</b>
+        {#if atLimit}<span class="zal-active-note">— limit, poczekaj aż któreś wygaśnie</span>{/if}
+        {#if z.ryzyko >= 100}<span class="zal-active-note danger">— ryzyko 100%: kolejna łapówka ściąga nalot SB!</span>{/if}
       </div>
 
       {#if supplies.length > 0}
@@ -92,7 +99,12 @@
               </div>
               <p class="zal-target-desc">{t.desc}</p>
               {#each list as b (b.id)}
-                <button class="zal-bribe" disabled={!b.affordable} onclick={() => bribe(b.id)} title={b.flavor ?? ''}>
+                <button
+                  class="zal-bribe"
+                  disabled={!b.affordable || atLimit}
+                  onclick={() => bribe(b.id)}
+                  title={atLimit ? `Limit ${z.maxBribes} aktywnych załatwień — poczekaj, aż wygasną` : (b.flavor ?? '')}
+                >
                   <span class="zal-bribe-name">{b.name}</span>
                   <span class="zal-bribe-eff">{b.effectText}</span>
                   <span class="zal-bribe-foot">
@@ -174,6 +186,25 @@
     font-variant-numeric: tabular-nums;
     min-width: 38px;
     text-align: right;
+  }
+  .zal-active {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .zal-active b {
+    color: var(--accent-strong);
+  }
+  .zal-active.full b {
+    color: var(--danger);
+  }
+  .zal-active-note {
+    color: var(--dim);
+  }
+  .zal-active-note.danger {
+    color: var(--danger);
+    font-weight: 700;
   }
   .zal-supply {
     background: var(--panel-2);
